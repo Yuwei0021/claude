@@ -27,16 +27,18 @@ Resolve the current feature, find per-service task files, and invoke the develop
 
 - For each service, use scope `@services/{service}` and the **developer** agent.
 - The developer agent reads that service's AGENTS.md for tech and conventions.
-- **Model selection**: check the `Complexity:` line at the top of each task file. For `low`/`medium` (or missing), use the developer agent's default model (opus). For `high`, invoke the developer agent with a model override to your strongest available model (e.g. `model: fable`). Model is chosen per service — a feature can run one fable and two opus developers concurrently.
+- **Model**: invoke every developer agent with `model: sonnet` by default.
 
 ### 4. Run in parallel
 
-For each service with a task file, invoke the developer agent in background mode:
+For each service with a task file, invoke the developer agent (`model: sonnet`) in background mode:
 
 ```
 Implement the coding plan in {taskFilePath} for feature {ID}.
 Use only code under services/{service}.
 Follow the feature design in {featureFilePath}.
 ```
+
+The developer agent uses the advisor tool automatically (mandatory on the `sonnet` model).
 
 All invocations run concurrently.
