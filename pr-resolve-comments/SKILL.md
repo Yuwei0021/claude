@@ -1,16 +1,19 @@
 ---
 name: pr-resolve-comments
-description: Fetch unresolved (Active) comments on your open PR via Azure DevOps MCP, address each, mark threads Fixed/Closed.
+description: Fetch unresolved (Active) comments on your open PR via Azure DevOps MCP and address each locally, without posting anything back to the PR.
 disable-model-invocation: true
 ---
 
 # `/pr-resolve-comments` — Address unresolved PR comments
 
-Fetch unresolved (Active) comments on your open PR via Azure DevOps MCP, address each one, and mark threads Fixed/Closed.
+Fetch unresolved (Active) comments on your open PR via Azure DevOps MCP and address each one locally.
+
+> **Read-only on the PR**
+> This skill **never writes to the PR**. Do not reply to threads, do not change thread status (Fixed/Closed/WontFix), do not comment on the PR — no `repo_pull_request_thread_write`, `repo_pull_request_write`, or any other MCP write call. Azure DevOps MCP usage is read-only; all outcomes are reported in chat so the user posts the replies themselves.
 
 > **Delegation & models**
 > - **Steps 1–3** (verify MCP, identify PR, fetch threads) are mechanical Azure DevOps MCP fetching. Delegate them to a subagent running on **Haiku** (`general-purpose` agent, `model: haiku`) so raw PR payloads stay out of the main context. The subagent returns only the structured list of Active threads. Do **not** use the `workitem-gatherer` agent — it gathers Azure DevOps *work items*, not PR comment threads.
-> - **Step 4 code changes** are applied by the **developer** agent, scoped to the service that owns the changed file. Thread replies and status updates (MCP writes) stay in the orchestrator, not the developer agent.
+> - **Step 4 code changes** are applied by the **developer** agent, scoped to the service that owns the changed file.
 
 ## Steps
 
@@ -28,14 +31,14 @@ The subagent's return value must be, for each Active thread: `threadId`, `filePa
 
 | Comment type | Action |
 |---|---|
-| **Code change requested** (e.g. "use camelCase", "fix this logic") | Determine the owning service from the thread's `filePath` and invoke the **developer** agent scoped to `@services/{service}` to apply the fix. After it returns, reply briefly ("Fixed.") and mark the thread as Fixed. |
-| **Question or clarification** | Reply with a clear answer, mark Fixed/Closed. |
-| **Informational or disagreement** | Reply with reasoning; mark WontFix/ByDesign if applicable. |
+| **Code change requested** (e.g. "use camelCase", "fix this logic") | Determine the owning service from the thread's `filePath` and invoke the **developer** agent scoped to `@services/{service}` to apply the fix locally. |
+| **Question or clarification** | Draft an answer in chat — do not post it. |
+| **Informational or disagreement** | Draft the reasoning in chat (and the status you'd suggest, e.g. WontFix/ByDesign) — do not post it. |
 
-For ambiguous feedback, ask for clarification before marking Fixed. If a fix cannot be applied, reply explaining why and mark WontFix or leave Active.
+For ambiguous feedback, ask the user for clarification. If a fix cannot be applied, say so with the reason.
 
-The developer agent only applies code changes inside its service; the orchestrator performs all thread replies and status updates via MCP.
+The developer agent only applies code changes inside its service. Nothing is sent back to Azure DevOps.
 
-### 5. Summary
+### 5. Summary (chat only)
 
-Report: how many threads addressed, which were fixed in code vs answered, and any that could not be fully resolved.
+Report in chat, per thread: `threadId`, file/line, what was done (fixed in code / answered / not resolved), and the **suggested reply text and thread status** for the user to post manually. Explicitly state that no replies or status changes were made on the PR.
