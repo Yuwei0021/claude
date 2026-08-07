@@ -1,11 +1,23 @@
 ---
 name: code-review
-description: Perform a comprehensive code review of local services (Java or React) by analyzing Git diffs against origin/develop, optionally comparing them against Azure DevOps work items for functional alignment, and applying quality, design, and testing skills based on service type. Can optionally apply accepted findings via the developer subagent in review-fix mode.
+description: Review changes in a service (Java or React) against origin/develop via the code-reviewer agent, and write a report under reviews/. Works standalone — your own work, or someone else's branch you have checked out — with or without an Azure DevOps work item for functional alignment.
 ---
 
 # `/code-review` — Service-Scoped Code Review
 
-Use this skill to orchestrate a comprehensive code review of local changes in one or more services under `services/`. The **code-reviewer** subagent does the actual review; this skill only resolves scope, computes the report path, invokes the subagent, and handles the follow-up.
+Use this skill to orchestrate a comprehensive code review of changes in one or more services under `services/`. The **code-reviewer** subagent does the actual review; this skill only resolves scope, computes the report path, invokes the subagent, and handles the follow-up.
+
+**This skill stands alone.** It is not a stage of the feature pipeline and does not require a design, a task file, or a work item. Three entry points are all normal:
+
+| Situation | How to run it |
+|---|---|
+| Reviewing **your own** work before opening a PR | `/code-review <service>` — the usual case |
+| Reviewing **someone else's** branch or PR | Fetch and check out their branch in `services/<service>` **first**, then `/code-review <service>`. The reviewer diffs `<comparison-branch>...HEAD`, so it reviews whatever is checked out. |
+| Reviewing with **functional context** | Run `/gather-workitem <ID>` first — even for a work item that is not yours — then `/code-review`. The reviewer will check the changes against the acceptance criteria. |
+
+A work item is **optional in every case**. Without one, functional alignment is simply marked Not Applicable and the technical review is unaffected.
+
+Establish which of the three you are in before step 1 — it changes the follow-up in step 6.
 
 ## 1. Resolve Local Service(s) to Review
 
@@ -50,7 +62,17 @@ Wait for the subagent(s) to complete and return their compact summaries.
 - Provide a clickable link to the generated report file.
 - Give a brief, high-level summary of the critical findings and functional alignment in chat. Keep it short and direct the user to the report for details — do not re-read the full report.
 
-## 6. Apply Recommendations (Optional — Developer Subagent)
+## 6. Follow-up — depends on whose code it is
+
+### Reviewing someone else's branch
+
+**Do not offer to apply anything.** Fixing a colleague's branch locally is not a review outcome — it creates changes they did not ask for, on work they own, that will collide with their next commit.
+
+Instead, reshape the findings for them to act on. For each finding, give a comment ready to paste onto the PR: the `file:line` it anchors to, one sentence on the problem, and the concrete suggestion. Group them by severity and keep each one short enough to read in a review thread — a reviewer's comment that runs three paragraphs does not get acted on.
+
+Then stop. The report under `reviews/` is your record; posting is the user's call.
+
+### Reviewing your own work — apply recommendations (optional)
 
 If the review produced findings, ask the user (via AskUserQuestion) whether to apply them:
 - **Critical only** (recommended)

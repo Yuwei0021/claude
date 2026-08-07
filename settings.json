@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git fetch:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(wc:*)",
+      "Bash(du:*)",
+      "Bash(diff:*)",
+      "Bash(date:*)",
+      "Bash(mvn -q:*)",
+      "Bash(./mvnw:*)",
+      "mcp__azureDevOps__wit_work_item",
+      "mcp__azureDevOps__wit_query",
+      "mcp__azureDevOps__wit_backlog",
+      "mcp__azureDevOps__wit_work_item_attachment",
+      "mcp__azureDevOps__repo_pull_request",
+      "mcp__azureDevOps__repo_pull_request_thread",
+      "mcp__azureDevOps__repo_branch",
+      "mcp__azureDevOps__repo_file",
+      "mcp__azureDevOps__repo_repository",
+      "mcp__azureDevOps__repo_search_commits",
+      "mcp__azureDevOps__search_code",
+      "mcp__azureDevOps__search_workitem",
+      "mcp__azureDevOps__search_wiki",
+      "mcp__azureDevOps__wiki"
+    ]
+  }
+}
