@@ -53,6 +53,8 @@ Context:
 <work item Summary and acceptance criteria — not the full context file>
 ```
 
+**The invocation prompt is an allowlist.** Pass only: the service name, the service path, the report path, and — when a work item exists — its Summary plus acceptance criteria. Nothing else, even when this session designed and implemented the change and you know exactly why every line is there. Explicitly do not pass: the feature decision record, task-file content, `fixes/*` diagnoses, your own implementation notes, or any "we decided X because Y". The reviewer must reach its own conclusions from the diff and the service on disk; handing it the rationale turns the review into a consistency check against the design instead of a check against the code.
+
 **If multiple services are targeted, launch one code-reviewer subagent per service in parallel** (a single message with multiple Agent tool calls) — each service is an independent git repository, so the reviews cannot conflict.
 
 Wait for the subagent(s) to complete and return their compact summaries.
