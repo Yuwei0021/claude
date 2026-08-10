@@ -156,6 +156,14 @@ Per affected screen, enumerate every state and name the owner:
 
 Cover at minimum: empty, loading, error, each distinct disabled reason, freshly-created, after-save, and after-remount. A state with no owner is a bug you have not written yet.
 
+**When the user supplies a screenshot or mockup of the desired design**, it is a design input, not decoration — read it and design to it. Screenshots range from a rough sketch to a near-final screen; say which you got, because it changes what you may infer:
+
+- Treat everything visible as **intended**: layout, control placement, labels, columns, grouping, empty-state wording, which controls appear disabled. Do not silently redesign it because another arrangement is easier to build.
+- Derive states from it. A screenshot is **one** state — usually the populated happy path. Add its state to the table as the one that is pinned, and enumerate the rest yourself; note in the Decisions table which states the screenshot did not show.
+- Reconcile it with the work item and with the code exploration. Where the screenshot contradicts an AC, or shows a field or action that does not exist in the service, that is a Silent rule for step 4 — ask, do not pick.
+- Where the screenshot is incomplete or ambiguous (cropped region, illegible label, no error/empty variant), name the gap explicitly rather than inventing the missing part.
+- Map what it shows onto real Bloom components and design tokens, and record in the Decisions table anywhere you deviate from the screenshot and why. A screenshot that came from another product is a reference for intent, not a spec for markup.
+
 **Optional, for genuinely new layouts**: build a self-contained HTML mockup and publish it as an Artifact for the user to open before the `ui-bloom` task file is written. Use the real Bloom design tokens — a mockup that does not resemble the app misleads more than it helps. Skip it for changes to existing screens; the state table is the higher-value artifact.
 
 ## 6. Present and wait for confirmation

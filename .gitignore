@@ -1,0 +1,26 @@
+.idea
+.vscode/settings.json
+.vscode/tasks.json
+
+# Workspace outputs (not versioned)
+features/
+reviews/
+fixes/
+files/
+local/
+tools/
+/release-notes/
+
+# Service code — cloned or symlinked in, each service has its own repo
+services/
+
+# Tool-local state
+.junie/
+.mcp.json
+.agents/settings.local.json
+.agents/settings.local.json.tmp.*
+.agents/scheduled_tasks.lock
+
+# NOTE: `.claude` (symlink to .agents) and `CLAUDE.md` are intentionally NOT ignored.
+# The symlink is what makes Claude Code find the skills, agents, and settings —
+# a fresh clone without it has none of them.

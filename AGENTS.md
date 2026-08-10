@@ -62,10 +62,11 @@ This repository is an AI agent workspace containing multiple cooperating service
 ## Workspace layout
 
 - `.agents/` — the single source for skills, agents, and settings; no per-tool copies. `.claude` is a symlink to it, and `CLAUDE.md` imports this file, so Claude Code reads exactly what other tools read.
-- `.agents/skills/` — `design`, `implement`, `code-review`, `gather-workitem`, `pr-resolve-comments`. Committing, PRs, and releases are done by hand.
+- `.agents/skills/` — `design`, `implement`, `code-review`, `bug-fix`, `gather-workitem`, `pr-resolve-comments`. Committing, PRs, and releases are done by hand.
+- Something **broken** goes to `/bug-fix` (diagnose → confirm → smallest fix + regression test), not through `/design`. Something **missing** goes through `/design` → `/implement`.
 - `.agents/agents/` — `developer` (sonnet), `code-reviewer` (inherits), `design-adversary` (inherits), `workitem-gatherer` (haiku).
 - `services/{service}/AGENTS.md` — authoritative per-service facts; wins over this file for that service.
-- `features/feature-{ID}-*/` — the feature decision record, work item context, and per-service task files. `reviews/` — review reports.
+- `features/feature-{ID}-*/` — the feature decision record, work item context, and per-service task files. `fixes/fix-{ID}-*/` — bug diagnoses. `reviews/` — review reports.
 - `README.md` — human onboarding: setup and how the workflow runs end to end. Not loaded into agent context.
 
 ## How agents should update this file

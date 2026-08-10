@@ -1,0 +1,104 @@
+---
+name: bug-fix
+description: Diagnose and fix a bug — reproduce it, find the root cause with evidence, check which other callers share it, get the diagnosis confirmed, then apply the smallest fix plus a regression test. Use instead of design/implement when something is broken rather than missing.
+---
+
+# `/bug-fix` — Diagnose first, then fix small
+
+A feature is a decision problem: you choose what to build, and the risk is leaving something out. **A bug is a discovery problem**: you find out why something is wrong, and the risk is fixing the symptom, or fixing the one call path in the ticket while its siblings stay broken.
+
+So the gate here is not a design you approve — it is a **diagnosis** you approve, before any code is written. A wrong root cause wastes the whole fix.
+
+Do not use `/design` or `/implement` for this. Do not produce a feature file, a decisions table, an invariant, or a UI state table — none of them earn their place on a bug.
+
+## 1. Get the context
+
+- If the user names an Azure DevOps work item, run `gather-workitem` first (or read an existing `workitem-{ID}-context.md`) — bug reports carry their decisive detail in comments and attached logs.
+- If there is no work item, take the report from the user. Ask for the failing input, the environment, and what they expected instead — a bug report without those three is not yet reproducible.
+- Determine the owning service from root `AGENTS.md`, and read `services/{service}/AGENTS.md`.
+
+## 2. Reproduce
+
+State the exact failing input or state, the observed behavior, and the expected behavior. Where a test can demonstrate it, write the failing test now — it becomes the regression test in step 6.
+
+**If you cannot reproduce it, say so and stop.** A fix for a bug you cannot trigger is a guess, and you will have no way to show the fix worked. Ask for what you need: the failing payload, the log, the environment, the sequence of actions.
+
+## 3. Find the root cause — with evidence
+
+Not "the null check is missing" but *why the value is null*. Trace it back to where the wrong state is actually produced.
+
+Every claim cites `file:line` you have read. Say how far back the bug goes if the history makes it clear (`git log -S`, `git blame`), because that tells the user which environments are affected.
+
+Symptom and cause are often several layers apart. The place the exception is thrown is rarely the place the bug is.
+
+## 4. Blast radius — the step that separates a fix from a patch
+
+Grep **every caller** of the code you are about to change.
+
+- Do the siblings share the bug? Then the ticket described one instance of it, and a fix at that one call site leaves the rest broken.
+- Does the change hold for all of them, or only for the path in the ticket?
+
+A guard added in one caller while its siblings keep the old assumption is not a fix. Fixing it once where all callers route through is both the correct fix and — usually — the smaller diff.
+
+**If the true root-cause fix turns out to be architectural** — it needs a new interface, a data model change, or a redesign of how the services interact — **stop here.** That is a design problem wearing a bug's clothes. Report what you found and route the user to `/design`. Discovering this at step 4 is cheap; discovering it halfway through a "quick fix" is not.
+
+## 5. ⛔ Confirm the diagnosis
+
+Write `fixes/fix-{ID}-{short-title}/fix-{ID}-{short-title}.md` — short, around 30 lines:
+
+```markdown
+# Fix {ID} — {title}
+
+## Reproduce
+Input / state, observed, expected.
+
+## Root cause
+Where the wrong state is produced, with `file:line` evidence. How far back it goes.
+
+## Blast radius
+Callers checked, which share the bug, which do not.
+
+## Proposed fix
+The smallest change that fixes the cause. One paragraph.
+
+## Regression test
+Which test, where, and what it asserts.
+```
+
+Present it and **wait**. This is the only gate. Do not start fixing "the obvious part" while waiting — if the diagnosis is wrong, that work is wasted and the wrong code is already in the tree.
+
+## 6. Fix — smallest change that fixes the cause
+
+Invoke the **developer** agent in bug-fix mode, scoped to the owning service:
+
+```
+Bug-fix mode for service: "<service-name>" (path: "services/<service-name>").
+Apply the fix described in "fixes/fix-{ID}-{short-title}/fix-{ID}-{short-title}.md".
+Fix the root cause it names, at the smallest scope that actually fixes it.
+Add the regression test it names: prove it FAILS before your fix and PASSES after.
+```
+
+Use `sonnet` unless the fix is genuinely intricate — the diagnosis was the hard part and it is already done.
+
+### Scope is the constraint here
+
+**Do not let a bug fix become a refactor.** The developer changes what is necessary to fix the cause and nothing else:
+
+- No renaming, reformatting, or restructuring of code it happens to be reading.
+- No "while I was in here" improvements, however tempting.
+- No upgrading patterns in surrounding code to match current conventions.
+- Other problems spotted along the way are **reported, not fixed** — they become their own ticket.
+
+A large diff for a small bug is a defect in its own right: it buries the actual fix, makes the change hard to review, and risks regressions in code that was working. If the fix genuinely cannot be small, that is the signal from step 4 that this is a design problem — stop and say so.
+
+**None of this relaxes the definition of done.** The build passes, the tests pass, and the regression test demonstrably goes red-then-green. A bug fix ships to production exactly like a feature does.
+
+## 7. Report
+
+- The root cause in one or two sentences.
+- The fix, and the files it touched — if that list is long, say why.
+- The regression test, and confirmation it failed before and passes after.
+- Anything else the developer found and deliberately did **not** fix.
+- Whether sibling callers shared the bug, and whether they were fixed in the same change or need their own.
+
+Then stop. Committing and opening the PR are manual.

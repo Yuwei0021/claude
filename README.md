@@ -27,6 +27,8 @@ Committing, opening PRs, and releasing are deliberately manual — there are no 
 - **Reviewing anything with no work item at all** — functional alignment is marked Not Applicable, the technical review is unaffected.
 - **Adding functional context to any review** — run `/gather-workitem <ID>` first, including for a work item that is not yours, then `/code-review`.
 
+- **Fixing something broken** — `/bug-fix`. Different shape, not a lighter `/design`: reproduce → root cause with `file:line` evidence → check which other callers share the bug → **you confirm the diagnosis** → smallest fix plus a regression test proven red-then-green. It refuses to let a bug fix turn into a refactor, and routes you to `/design` if the root cause turns out to be architectural.
+
 `/design` and `/implement` are for multi-service feature work. Reaching for them on a single-service change with no schema change, no new interface, and no UI states is ceremony — go straight to the code.
 
 **Requirements**
