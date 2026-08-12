@@ -20,6 +20,8 @@
       "Bash(date:*)",
       "Bash(mvn -q:*)",
       "Bash(./mvnw:*)",
+      "Bash(npx jest:*)",
+      "Bash(npm run test:*)",
       "mcp__azureDevOps__wit_work_item",
       "mcp__azureDevOps__wit_query",
       "mcp__azureDevOps__wit_backlog",

@@ -25,6 +25,13 @@ Establish which of the three you are in before step 1 — it changes the follow-
 - Map any service name that does not start with `services/` to `services/<service-name>`.
 - Verify the directory exists under `services/`. If it is invalid, stop and ask the user for clarification.
 
+Then establish the **review surface** for each service — run `git status --short` inside `services/<service-name>` and note whether there are uncommitted or untracked changes.
+
+This matters because the committed diff is not the whole change. Work in this workspace is committed by hand, so a service that was just implemented usually has its change sitting in the working tree, and a branch-vs-branch diff would review none of it. Untracked files never appear in any diff at all.
+
+- If the working tree is dirty, say so in one line before dispatching (which service, how many uncommitted and untracked files). The review still proceeds — the reviewer covers committed, uncommitted, and untracked changes as one surface.
+- Do not commit or stash anything to tidy the surface. What is on disk is what gets reviewed.
+
 ## 2. Locate Work Item Context File (Optional)
 
 Only perform this step if the user provides or references an Azure DevOps work item:
@@ -34,9 +41,14 @@ Only perform this step if the user provides or references an Azure DevOps work i
 
 ## 3. Compute the Report Path
 
-Compute the path here so the subagent does not have to re-derive it by scanning `features/`:
-- **With a work item**: `reviews/review-{ID}-{short-title}/review-{ID}-{short-title}.md`, where `{ID}` is the resolved work item ID and `{short-title}` is a kebab-case slug of its title (e.g. `upgrade-springboot` for "Upgrade Spring Boot").
+Compute the path here so the subagent does not have to re-derive it by scanning `features/`.
+
+**One report per service, always — the filename must carry the service name.** Reviews of several services run in parallel; a path that identifies only the work item makes them all write to the same file and the last writer wins.
+
+- **With a work item**: `reviews/review-{ID}-{short-title}/review-{ID}-{service-name}.md`, where `{ID}` is the resolved work item ID and `{short-title}` is a kebab-case slug of its title (e.g. `reviews/review-56138-link-panel-process-template/review-56138-ui-bloom.md`).
 - **Without a work item**: `reviews/review-{service-name}/review-{timestamp}.md`, with `{timestamp}` from `date +%Y%m%d` (e.g. `reviews/review-micro-service-master-data/review-20260703.md`).
+
+Before dispatching, check that no two targeted services resolve to the same path. If they do, the formula was applied wrong — fix it rather than letting the subagents race.
 
 ## 4. Invoke the Code Reviewer Subagent
 
@@ -63,6 +75,7 @@ Wait for the subagent(s) to complete and return their compact summaries.
 
 - Provide a clickable link to the generated report file.
 - Give a brief, high-level summary of the critical findings and functional alignment in chat. Keep it short and direct the user to the report for details — do not re-read the full report.
+- State the review surface the reviewer actually used (comparison branch, and whether uncommitted/untracked changes were included). If it does not match what you established in step 1, that is the first thing to report, not a footnote — every finding below it is scoped to the wrong change.
 
 ## 6. Follow-up — depends on whose code it is
 
