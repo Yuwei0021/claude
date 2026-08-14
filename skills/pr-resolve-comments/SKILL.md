@@ -23,7 +23,7 @@ Invoke a `general-purpose` subagent with `model: haiku` to perform the following
 
 1. **Verify MCP**: call an Azure DevOps MCP tool. If unavailable, stop: *"Azure DevOps MCP server is unavailable."*
 2. **Identify the PR**: if the user specifies a PR ID or repo, use it. Otherwise, list open PRs (`created_by_me: true`, `status: Active`) and match by branch name or work item ID from the branch. If multiple match, report them for the user to choose; if none found, fail.
-3. **Fetch unresolved threads**: use `list_pull_request_threads` with `status: Active`. If none, report *"No unresolved comments on this PR."*
+3. **Fetch unresolved threads**: use `repo_pull_request_thread` with `action: "list"` and `status: "Active"`, passing the `repositoryId` and `pullRequestId` from step 2 (`project` is required too when `repositoryId` is a name rather than a GUID). If none, report *"No unresolved comments on this PR."*
 
 The subagent's return value must be, for each Active thread: `threadId`, `filePath`, `rightFileStartLine` (and other position fields), the full comment text, and a classification — **code-change**, **question**, or **informational**. It must not echo raw MCP payloads.
 

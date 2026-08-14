@@ -37,6 +37,7 @@ This repository is an AI agent workspace containing multiple cooperating service
 - **No code comments in production code** unless the user explicitly asks. Comments in test files are fine.
 - **`AGENTS.md` files must never reference Azure DevOps work items** (US/feature/story numbers). Record the durable fact, not the ticket.
 - **ui-bloom locales:** edit only `packages/bloom/public/locales/en/`. Other languages are translated elsewhere.
+- **Write for readers whose first language is not English.** This applies to everything a human reads — chat replies, feature files, review reports, PR descriptions, commit messages. Short sentences, common words, active voice. No idioms, metaphors, or figures of speech ("blast radius", "hand-waving", "last writer wins", "the heart of the document") — say the literal thing instead. Technical terms (idempotent, index, migration, race condition) stay; they are precise and shared. Rare general-purpose words do not — use *is missing* over *is absent*, *make sure* over *ensure*, *break* over *undermine*. Keep this rule out of source code and identifiers.
 - **Naming new Java types:** name them in the owning micro-service's own domain vocabulary, at that service's abstraction level. Don't borrow another service's concepts, and don't drop to over-generic names (`Data`, `Info`, `Manager`, `Helper`) or up to over-abstract framework-speak.
 
 ## Planning rules
@@ -62,7 +63,7 @@ This repository is an AI agent workspace containing multiple cooperating service
 ## Workspace layout
 
 - `.agents/` — the single source for skills, agents, and settings; no per-tool copies. `.claude` is a symlink to it, and `CLAUDE.md` imports this file, so Claude Code reads exactly what other tools read.
-- `.agents/skills/` — `design`, `implement`, `code-review`, `bug-fix`, `gather-workitem`, `pr-resolve-comments`. Committing, PRs, and releases are done by hand.
+- `.agents/skills/` — `design`, `implement`, `code-review`, `bug-fix`, `gather-workitem`, `pr-description`, `pr-resolve-comments`. Committing, PR creation, and releases are done by hand.
 - Something **broken** goes to `/bug-fix` (diagnose → confirm → smallest fix + regression test), not through `/design`. Something **missing** goes through `/design` → `/implement`.
 - `.agents/agents/` — `developer` (sonnet), `code-reviewer` (inherits), `design-adversary` (inherits), `workitem-gatherer` (haiku).
 - `services/{service}/AGENTS.md` — authoritative per-service facts; wins over this file for that service.

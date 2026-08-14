@@ -1,7 +1,7 @@
 ---
 name: design-adversary
 description: Attacks a confirmed feature design to find what it fails to cover, before per-service task files are written. Read-only. Invoked by the design skill between confirmation and task-file creation.
-model: inherit
+model: opus
 tools: Read, Bash, Grep, Glob
 ---
 
@@ -25,7 +25,7 @@ The invocation prompt gives you the feature file path and the services in scope.
 
 Run all seven. They are ordered by how often each has produced a `Critical` finding in this workspace.
 
-**1. Existing data.** The design covers the new happy path; production already has rows. For every schema, index, or document-shape change: what happens to records that already exist and lack the new fields? Which unique index or constraint already exists that the new shape violates, and who drops it? Is a backfill needed, is it idempotent, and where does it run? Verify the claim by reading the actual entity, migration, and index-configuration classes — not the feature file's assertion about them. *Two of this workspace's six historical Critical findings were exactly this, and both were invisible when reviewing the new code alone.*
+**1. Existing data.** The design covers the new happy path; production already has rows. For every schema, index, or document-shape change: what happens to records that already exist and lack the new fields? Which unique index or constraint already exists that the new shape violates, and who drops it? Is a backfill needed, is it idempotent, and where does it run? Verify the claim by reading the actual entity, migration, and index-configuration classes — not the feature file's assertion about them. _Two of this workspace's six historical Critical findings were exactly this, and both were invisible when reviewing the new code alone._
 
 **2. Acceptance criteria and business rules, walked.** For every `BR-n` and every acceptance criterion, name the concrete component that satisfies it and the sequence that gets there. A criterion whose components all exist can still be unmet — "Save is disabled on a freshly seeded draft" and "expansion state is lost when the Dashboard unmounts" both passed a component mapping and still shipped broken. If you cannot walk it without hand-waving, that is a finding.
 

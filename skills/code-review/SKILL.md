@@ -1,6 +1,7 @@
 ---
 name: code-review
 description: Review changes in a service (Java or React) against origin/develop via the code-reviewer agent, and write a report under reviews/. Works standalone — your own work, or someone else's branch you have checked out — with or without an Azure DevOps work item for functional alignment.
+model: opus
 ---
 
 # `/code-review` — Service-Scoped Code Review
@@ -9,11 +10,11 @@ Use this skill to orchestrate a comprehensive code review of changes in one or m
 
 **This skill stands alone.** It is not a stage of the feature pipeline and does not require a design, a task file, or a work item. Three entry points are all normal:
 
-| Situation | How to run it |
-|---|---|
-| Reviewing **your own** work before opening a PR | `/code-review <service>` — the usual case |
-| Reviewing **someone else's** branch or PR | Fetch and check out their branch in `services/<service>` **first**, then `/code-review <service>`. The reviewer diffs `<comparison-branch>...HEAD`, so it reviews whatever is checked out. |
-| Reviewing with **functional context** | Run `/gather-workitem <ID>` first — even for a work item that is not yours — then `/code-review`. The reviewer will check the changes against the acceptance criteria. |
+| Situation                                       | How to run it                                                                                                                                                                              |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Reviewing **your own** work before opening a PR | `/code-review <service>` — the usual case                                                                                                                                                  |
+| Reviewing **someone else's** branch or PR       | Fetch and check out their branch in `services/<service>` **first**, then `/code-review <service>`. The reviewer diffs `<comparison-branch>...HEAD`, so it reviews whatever is checked out. |
+| Reviewing with **functional context**           | Run `/gather-workitem <ID>` first — even for a work item that is not yours — then `/code-review`. The reviewer will check the changes against the acceptance criteria.                     |
 
 A work item is **optional in every case**. Without one, functional alignment is simply marked Not Applicable and the technical review is unaffected.
 
@@ -35,6 +36,7 @@ This matters because the committed diff is not the whole change. Work in this wo
 ## 2. Locate Work Item Context File (Optional)
 
 Only perform this step if the user provides or references an Azure DevOps work item:
+
 - Find the work item context file at `features/feature-{ID}-{short-title}/workitem-{ID}-context.md` (or scan `features/` for a subdirectory named `feature-{ID}-*` containing a `workitem-{ID}-context.md` file).
 - If a work item ID/reference was provided but the file is not found, advise the user to run the `gather-workitem` skill first.
 - If found, extract only what the reviewer needs for functional alignment: the **Summary** section plus the **acceptance criteria**. Do not forward full comment threads or attachment contents to the subagent. Update the chat session name to match the work item/feature title.
@@ -53,11 +55,14 @@ Before dispatching, check that no two targeted services resolve to the same path
 ## 4. Invoke the Code Reviewer Subagent
 
 Invoke the **code-reviewer** subagent:
+
 ```
 Perform a code review for service: "<service-name>" (path: "services/<service-name>").
 Save the report at: "<computed-report-path>".
 ```
+
 If work item details are available, append:
+
 ```
 Verify functional alignment with the provided work item details.
 
@@ -90,6 +95,7 @@ Then stop. The report under `reviews/` is your record; posting is the user's cal
 ### Reviewing your own work — apply recommendations (optional)
 
 If the review produced findings, ask the user (via AskUserQuestion) whether to apply them:
+
 - **Critical only** (recommended)
 - **Critical + Recommended**
 - **Let me pick** — user supplies specific finding IDs
@@ -97,14 +103,27 @@ If the review produced findings, ask the user (via AskUserQuestion) whether to a
 
 If the user opts in:
 
+**Before dispatching, classify every selected finding.** A finding is
+**behaviour-changing** when its fix alters what a caller can observe: the shape of a
+response, an HTTP status, whether an error propagates or is swallowed, a persisted
+value, or a published contract. Everything else is internal.
+
+- **Internal findings** — apply them without asking.
+- **Behaviour-changing findings** — state the current behaviour and the behaviour after
+  the fix, in one line each, and get the user's confirmation first. Do this even when
+  the finding text itself proposes the fix: a review finding names a problem, it does
+  not authorise a contract change. If a finding offers more than one option, ask which
+  one; do not pick for the user.
+
+A review that quietly changes an API is worse than the defect it fixed, because the
+defect was at least visible in the report.
+
 1. Invoke the **developer** subagent in **review-fix mode**, one subagent per service (in parallel if several services are involved):
    ```
    Review-fix mode for service: "<service-name>" (path: "services/<service-name>").
    Apply the following findings from the review report at "<report-path>": <CR-1, CR-3, ...>.
-   Apply only these findings, following each finding's Before/After snippet. Run the service's
-   build and tests afterwards, and append a "## Fix Log" section to the report recording each
-   finding as Applied or Skipped (with reason).
    ```
+   The prompt carries the parameters and nothing else. How the findings are applied — only the selected ones, following each Before/After snippet, build and tests afterwards, a `## Fix Log` appended to the report — is in `developer.agent.md` under "Review-Fix Mode", and that copy is in force. Restating it here only creates a second version to keep in step.
 2. Do NOT paste the full report into the prompt — the developer subagent reads the report file itself; only the path and the selected finding IDs go in the prompt.
 3. When the subagent(s) return, summarize in chat: which findings were applied, which were skipped and why, and the build/test result. If the build or tests fail after fixes, report the failure — do not silently retry with broader changes.
 4. Suggest (but do not run automatically) a re-review of only the touched files if any Critical finding was applied.

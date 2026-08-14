@@ -1,6 +1,7 @@
 ---
 name: design
 description: Design a cross-service feature from a gathered work item context file — restate the business rules for the user to validate, produce a short decision-record feature file, and after confirmation write the per-service implementation task files.
+model: opus
 ---
 
 # `/design` — Plan from gathered work item context
@@ -9,10 +10,10 @@ Turn the context file produced by `gather-workitem` into a cross-service design 
 
 Two documents come out of this skill, and they have **different readers**:
 
-| Document | Reader | Contains |
-|---|---|---|
+| Document                        | Reader                                    | Contains                      |
+| ------------------------------- | ----------------------------------------- | ----------------------------- |
 | `feature-{ID}-{short-title}.md` | **the human**, who approves or rejects it | decisions, and only decisions |
-| `tasks/{service}.md` | the developer agent | the full implementation spec |
+| `tasks/{service}.md`            | the developer agent                       | the full implementation spec  |
 
 Never write implementation spec into the feature file. It is the single biggest reason these documents become unreadable.
 
@@ -52,15 +53,18 @@ Number every rule `BR-1`, `BR-2`, … so the user can reply "BR-4 is wrong" inst
 ## Business rules as I understand them — please validate
 
 ### Stated — written in the work item
+
 - **BR-1** — A deployed template can be edited only through a new version; the deployed one stays frozen.
 - **BR-2** — …
 
 ### Implied — the code already enforces this, or the feature cannot work without it
+
 - **BR-5** — A template group has at most one SCHEDULED version at a time.
-  *(`TemplateDeploymentService.deploy()` already rejects a second one — the item never says this.)*
+  _(`TemplateDeploymentService.deploy()` already rejects a second one — the item never says this.)_
 - **BR-6** — …
 
 ### Silent — the item gives no answer and I would otherwise have to choose
+
 - **BR-9** — What happens to templates already ACTIVE when this ships? They have no `templateGroupId`.
 - **BR-10** — Two users editing the same draft: last-write-wins, or reject the second?
 - **BR-11** — On a deploy failure midway, is the operation retryable, or left half-applied?
@@ -68,9 +72,9 @@ Number every rule `BR-1`, `BR-2`, … so the user can reply "BR-4 is wrong" inst
 
 Annotate any rule where the code disagrees with the item, rather than running a separate classification pass:
 
-- *the item asks for X, but `TemplateDeploymentService.deploy()` has enforced the opposite since `<commit>` — which wins?*
-- *the item names a `versionLabel` field; no such field exists — new field, or does it mean `versionNumber`?*
-- *this already works today — is it in scope as a regression guard, or was it forgotten?*
+- _the item asks for X, but `TemplateDeploymentService.deploy()` has enforced the opposite since `<commit>` — which wins?_
+- _the item names a `versionLabel` field; no such field exists — new field, or does it mean `versionNumber`?_
+- _this already works today — is it in scope as a regression guard, or was it forgotten?_
 
 **Stop here and wait.** Do not design, do not write the feature file, do not "start on the parts that are clear". Do not resolve a Silent rule by picking the reading that makes the design easier — that is precisely the choice the user is there to make. When the user corrects or adds rules, restate the corrected list back if the change is substantial, then continue.
 
@@ -85,35 +89,35 @@ Write `features/feature-{ID}-{short-title}/feature-{ID}-{short-title}.md`.
 
 Required sections, in order:
 
-| Section | Contents |
-|---|---|
-| **Goal** | 5 lines max: what changes for the user, and why now. |
-| **Business rules** | The validated `BR-n` list from step 4, in its final corrected form. This is the contract the design answers to. |
-| **Open questions** | Anything from step 4 the user left unresolved. Empty section if none — never omit the heading. |
-| **Invariant** | **One line**, the single property the whole design rests on — the thing that must stay true no matter the order of operations. A design that cannot name one is usually a pile of cases rather than a design, and the adversary pass in step 7 will attack this line first. |
-| **Decisions** | Table: `Decision \| Why \| Alternative rejected`. This is the heart of the document. One row per choice a reasonable engineer could have made differently. |
-| **Flow** | One Mermaid sequence diagram of the cross-service interaction. One. Not per-service diagrams. |
-| **Cross-service contracts** | **Mandatory when more than one service is in scope. See below.** |
-| **Existing data & migration** | **Mandatory — see below.** |
-| **Acceptance criteria — end-to-end walk** | **Mandatory — see below.** |
-| **UI states** | Only when `ui-bloom` is in scope. **See below.** |
-| **Per-service scope** | One line per service: what it owns in this feature. Not how. |
-| **Out of scope** | What was considered and deliberately excluded. |
-| **Risks** | Accepted gaps, with why they are acceptable. |
+| Section                                   | Contents                                                                                                                                                                                                                                                                    |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Goal**                                  | 5 lines max: what changes for the user, and why now.                                                                                                                                                                                                                        |
+| **Business rules**                        | The validated `BR-n` list from step 4, in its final corrected form. This is the contract the design answers to.                                                                                                                                                             |
+| **Open questions**                        | Anything from step 4 the user left unresolved. Empty section if none — never omit the heading.                                                                                                                                                                              |
+| **Invariant**                             | **One line**, the single property the whole design rests on — the thing that must stay true no matter the order of operations. A design that cannot name one is usually a pile of cases rather than a design, and the adversary pass in step 7 will attack this line first. |
+| **Decisions**                             | Table: `Decision \| Why \| Alternative rejected`. This is the heart of the document. One row per choice a reasonable engineer could have made differently.                                                                                                                  |
+| **Flow**                                  | One Mermaid sequence diagram of the cross-service interaction. One. Not per-service diagrams.                                                                                                                                                                               |
+| **Cross-service contracts**               | **Mandatory when more than one service is in scope. See below.**                                                                                                                                                                                                            |
+| **Existing data & migration**             | **Mandatory — see below.**                                                                                                                                                                                                                                                  |
+| **Acceptance criteria — end-to-end walk** | **Mandatory — see below.**                                                                                                                                                                                                                                                  |
+| **UI states**                             | Only when `ui-bloom` is in scope. **See below.**                                                                                                                                                                                                                            |
+| **Per-service scope**                     | One line per service: what it owns in this feature. Not how.                                                                                                                                                                                                                |
+| **Out of scope**                          | What was considered and deliberately excluded.                                                                                                                                                                                                                              |
+| **Risks**                                 | Accepted gaps, with why they are acceptable.                                                                                                                                                                                                                                |
 
 ### Cross-service contracts (mandatory when more than one service is in scope)
 
 `/implement` runs one developer agent **per service, in parallel**. If ui-bloom's task file assumes an endpoint that `micro-service-enterprise-process` is creating in the same wave, ui-bloom codes against something that does not exist yet, both agents report success, and the failure only appears when the two halves meet.
 
-Parallel implementation is sound only when the interface is frozen *before* either side starts. So for every seam this feature creates or changes, pin it here:
+Parallel implementation is sound only when the interface is frozen _before_ either side starts. So for every seam this feature creates or changes, pin it here:
 
-| | Specify |
-|---|---|
-| **Endpoint** | method + full path, in the workspace's camelCase convention |
-| **Request** | field names and types — the actual shape, not a description of it |
-| **Response** | success shape, and the status code for each outcome |
-| **Errors** | what the consumer receives on a rejected request, and on a partial failure |
-| **Owner** | which service implements it; every other service consumes it as written |
+|              | Specify                                                                    |
+| ------------ | -------------------------------------------------------------------------- |
+| **Endpoint** | method + full path, in the workspace's camelCase convention                |
+| **Request**  | field names and types — the actual shape, not a description of it          |
+| **Response** | success shape, and the status code for each outcome                        |
+| **Errors**   | what the consumer receives on a rejected request, and on a partial failure |
+| **Owner**    | which service implements it; every other service consumes it as written    |
 
 Both task files then reference this section rather than restating it — one definition, two readers. Mark it **frozen**: a developer agent that wants to change a shared interface must stop and report, not adapt its own side.
 
@@ -121,14 +125,14 @@ If a seam cannot be pinned yet, that is not a detail to settle during implementa
 
 ### Existing data & migration (mandatory)
 
-Production already has data. Designs that only cover the new happy path are the single largest source of `Critical` review findings in this workspace — a unique index that was never dropped, a new field that was never backfilled. Both were invisible in review of the *new* code and fatal in any existing environment.
+Production already has data. Designs that only cover the new happy path are the single largest source of `Critical` review findings in this workspace — a unique index that was never dropped, a new field that was never backfilled. Both were invisible in review of the _new_ code and fatal in any existing environment.
 
 State explicitly, even when the answer is "nothing":
 
 - What happens to **rows that already exist** and lack the new fields?
 - Which **indexes/constraints already exist** that the new shape violates? Who drops them, and when?
 - Is a **backfill** needed? Where does it run, and is it idempotent?
-- Does the change work on a **fresh** environment *and* an **upgraded** one?
+- Does the change work on a **fresh** environment _and_ an **upgraded** one?
 
 ### Acceptance criteria — end-to-end walk (mandatory)
 
@@ -144,15 +148,15 @@ The UI defects that reach review here are **state** defects, not layout defects:
 
 Per affected screen, enumerate every state and name the owner:
 
-| State | What renders | Which component owns it | AC |
-|---|---|---|---|
-| empty | … | … | — |
-| loading | … | … | — |
-| error | … | … | — |
-| disabled because *X* | … | … | AC2 |
-| freshly created / seeded | … | … | AC4 |
-| after save | … | … | AC4 |
-| after remount / revisit | … | … | AC3 |
+| State                    | What renders | Which component owns it | AC  |
+| ------------------------ | ------------ | ----------------------- | --- |
+| empty                    | …            | …                       | —   |
+| loading                  | …            | …                       | —   |
+| error                    | …            | …                       | —   |
+| disabled because _X_     | …            | …                       | AC2 |
+| freshly created / seeded | …            | …                       | AC4 |
+| after save               | …            | …                       | AC4 |
+| after remount / revisit  | …            | …                       | AC3 |
 
 Cover at minimum: empty, loading, error, each distinct disabled reason, freshly-created, after-save, and after-remount. A state with no owner is a bug you have not written yet.
 

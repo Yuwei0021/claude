@@ -1,6 +1,7 @@
 ---
 name: bug-fix
 description: Diagnose and fix a bug — reproduce it, find the root cause with evidence, check which other callers share it, get the diagnosis confirmed, then apply the smallest fix plus a regression test. Use instead of design/implement when something is broken rather than missing.
+model: opus
 ---
 
 # `/bug-fix` — Diagnose first, then fix small
@@ -25,7 +26,7 @@ State the exact failing input or state, the observed behavior, and the expected 
 
 ## 3. Find the root cause — with evidence
 
-Not "the null check is missing" but *why the value is null*. Trace it back to where the wrong state is actually produced.
+Not "the null check is missing" but _why the value is null_. Trace it back to where the wrong state is actually produced.
 
 Every claim cites `file:line` you have read. Say how far back the bug goes if the history makes it clear (`git log -S`, `git blame`), because that tells the user which environments are affected.
 
@@ -50,18 +51,23 @@ Write `fixes/fix-{ID}-{short-title}/fix-{ID}-{short-title}.md` — short, around
 # Fix {ID} — {title}
 
 ## Reproduce
+
 Input / state, observed, expected.
 
 ## Root cause
+
 Where the wrong state is produced, with `file:line` evidence. How far back it goes.
 
 ## Blast radius
+
 Callers checked, which share the bug, which do not.
 
 ## Proposed fix
+
 The smallest change that fixes the cause. One paragraph.
 
 ## Regression test
+
 Which test, where, and what it asserts.
 ```
 
@@ -82,14 +88,9 @@ Use `sonnet` unless the fix is genuinely intricate — the diagnosis was the har
 
 ### Scope is the constraint here
 
-**Do not let a bug fix become a refactor.** The developer changes what is necessary to fix the cause and nothing else:
+The developer agent carries the scope rules — no refactoring, no "while I was in here" improvements, other problems reported rather than fixed. They are in `developer.agent.md` under "Bug-Fix Mode", and that is the copy that is in force when the code is written. Do not restate them in the invocation prompt.
 
-- No renaming, reformatting, or restructuring of code it happens to be reading.
-- No "while I was in here" improvements, however tempting.
-- No upgrading patterns in surrounding code to match current conventions.
-- Other problems spotted along the way are **reported, not fixed** — they become their own ticket.
-
-A large diff for a small bug is a defect in its own right: it buries the actual fix, makes the change hard to review, and risks regressions in code that was working. If the fix genuinely cannot be small, that is the signal from step 4 that this is a design problem — stop and say so.
+What you own here is the reaction: if the developer reports that the fix cannot be kept small, that is the step 4 signal arriving late. It means this is a design problem, not a bug. Stop and route the user to `/design` rather than approving a larger diff.
 
 **None of this relaxes the definition of done.** The build passes, the tests pass, and the regression test demonstrably goes red-then-green. A bug fix ships to production exactly like a feature does.
 

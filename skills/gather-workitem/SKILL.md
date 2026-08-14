@@ -19,7 +19,7 @@ Verify Azure DevOps MCP, then delegate the gathering to the **workitem-gatherer*
 
 ### 2. Invoke the workitem-gatherer agent
 
-- Invoke the **workitem-gatherer** agent (synchronously) with the work item ID if the user provided one, otherwise instruct it to find the current in-progress work item via `wit_my_work_items`.
+- Invoke the **workitem-gatherer** agent (synchronously) with the work item ID if the user provided one, otherwise instruct it to find the current in-progress work item via `wit_work_item` with `action: "my"`.
 - The agent retrieves full details (work item, parent, related items, comments, attachments), saves attachments under `features/feature-{ID}-{short-title}/`, and writes the structured context file at `features/feature-{ID}-{short-title}/workitem-{ID}-context.md` with a self-contained **Summary** section first.
 - The agent returns only: the context file path, the feature title, and the Summary section. Do not re-read the full context file in the main conversation.
 

@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Use when requested to perform a code review on local changes (Java or React). Compares changes against origin/develop and optional Azure DevOps work items for both technical and functional correctness.
-model: inherit
+model: opus
 tools: Read, Bash, Grep, Glob, Write
 ---
 
@@ -27,7 +27,6 @@ Services under `services/` are separate git repositories — run every git comma
    Two-dot `git diff <branch>` is wrong here: after the fetch, the remote tip has moved ahead, and commits that landed on develop show up as deletions in your diff. Never file findings from a two-dot diff.
 
 5. **Add the working tree.** The committed diff is not the whole change — work in this workspace is committed by hand, so the change you are reviewing is often still uncommitted, and `<comparison-branch>...HEAD` resolves to `merge-base..HEAD`, which excludes the working tree entirely. Reviewing only that means reviewing the wrong change, or nothing at all.
-
    - `git status --short` — enumerate modified, staged, and untracked paths.
    - `git diff HEAD` — tracked changes not yet committed.
    - Untracked files (`??`) appear in **no** diff at any base. Read each one in full and review it as newly added code. A new class or spec file that was never committed is exactly the kind of thing that otherwise ships unreviewed.
@@ -50,33 +49,34 @@ The two dimensions that beat any generic checklist, always in scope:
 - **Service conventions**: read the service's `AGENTS.md` **at the comparison branch** — `git show <comparison-branch>:AGENTS.md` — and the files immediately around the change. A pattern that contradicts the surrounding code is a finding even when the code is objectively fine in isolation. Root `CLAUDE.md` rules apply too — notably: no comments in production code, and new Java types named in the owning service's own domain vocabulary.
 
   Read it at the comparison branch, never from the working tree, because the author of this change may have edited it. `AGENTS.md` is the standard you judge against; if the diff can move the standard, the change can declare itself compliant. Whenever `AGENTS.md` appears in your review surface, its added lines are **a claim under review, not a premise**: check each one against the code that is actually there, and file a finding if it documents an intention rather than a fact, or if it was widened to legitimise something in this diff. Never cite a line the diff itself introduced as the authority for passing that diff.
+
 - **Root-cause vs. symptom**: does the change fix the actual cause, or guard one call path while sibling callers stay broken? Grep the callers of any modified shared function.
 
 ### Java Services (indicated by `pom.xml`)
 
 Weight these by what the diff actually contains:
 
-| Dimension | Look for when the diff… |
-|---|---|
-| **Object-oriented design** | always (baseline) — SOLID, God classes, feature envy, misplaced responsibility |
-| **Type design** | adds public types/interfaces, or primitive-obsessed parameters and fields |
-| **Exception handling** | adds `try`/`catch`/`throw`/`finally`, custom exceptions, or swallowed errors; check resource closing and context preservation |
-| **Security** | touches input validation, SQL/JPQL, secrets, authentication, or deserialization |
-| **Concurrency** | touches threads, executors, `CompletableFuture`, reactive chains, or virtual threads; check blocking calls on event-loop threads |
-| **Generics** | changes generic signatures, wildcards, or collection type parameters |
-| **Modern Java & FP** | should use Streams, `Optional`, `var`, `java.time`, records, sealed types, pattern matching — or misuses them |
-| **Observability** | adds/changes logger calls — level, parameterization, no sensitive data |
-| **Spring** | changes stereotypes, beans, config properties, profiles, REST controllers/DTOs/status codes, `JdbcClient`/`JdbcTemplate`/repositories, or `db/migration` scripts |
-| **Contracts & stubs** | modifies an OpenAPI spec or WireMock mappings — breaking changes, drift from the implementation |
-| **Maven** | modifies `pom.xml` — version placement, BOM usage, scope correctness |
+| Dimension                  | Look for when the diff…                                                                                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Object-oriented design** | always (baseline) — SOLID, God classes, feature envy, misplaced responsibility                                                                                   |
+| **Type design**            | adds public types/interfaces, or primitive-obsessed parameters and fields                                                                                        |
+| **Exception handling**     | adds `try`/`catch`/`throw`/`finally`, custom exceptions, or swallowed errors; check resource closing and context preservation                                    |
+| **Security**               | touches input validation, SQL/JPQL, secrets, authentication, or deserialization                                                                                  |
+| **Concurrency**            | touches threads, executors, `CompletableFuture`, reactive chains, or virtual threads; check blocking calls on event-loop threads                                 |
+| **Generics**               | changes generic signatures, wildcards, or collection type parameters                                                                                             |
+| **Modern Java & FP**       | should use Streams, `Optional`, `var`, `java.time`, records, sealed types, pattern matching — or misuses them                                                    |
+| **Observability**          | adds/changes logger calls — level, parameterization, no sensitive data                                                                                           |
+| **Spring**                 | changes stereotypes, beans, config properties, profiles, REST controllers/DTOs/status codes, `JdbcClient`/`JdbcTemplate`/repositories, or `db/migration` scripts |
+| **Contracts & stubs**      | modifies an OpenAPI spec or WireMock mappings — breaking changes, drift from the implementation                                                                  |
+| **Maven**                  | modifies `pom.xml` — version placement, BOM usage, scope correctness                                                                                             |
 
 ### ui-bloom / React Services (indicated by `package.json` under `packages/*`)
 
-| Dimension | Look for when the diff… |
-|---|---|
+| Dimension                           | Look for when the diff…                                                                                                                                   |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **React correctness & performance** | changes components, hooks, data fetching, or rendering paths — effect dependencies, stale closures, needless re-renders, Redux-Saga side-effect placement |
-| **Accessibility & markup** | changes CSS/styling, markup structure, or accessibility-relevant JSX — keyboard reachability, focus handling, labels on interactive elements, contrast |
-| **Locale scope** | touches locales — only `packages/bloom/public/locales/en/` may be edited |
+| **Accessibility & markup**          | changes CSS/styling, markup structure, or accessibility-relevant JSX — keyboard reachability, focus handling, labels on interactive elements, contrast    |
+| **Locale scope**                    | touches locales — only `packages/bloom/public/locales/en/` may be edited                                                                                  |
 
 Judge test quality directly from the diff. You are read-only: a missing or weak test is a finding with an ID, not something you write.
 

@@ -1,6 +1,7 @@
 ---
 name: implement
 description: Resolve the current feature, check the task files are still implementable, and run the developer agent per service in parallel at the model each task file asks for.
+model: sonnet
 ---
 
 # `/implement` — Run implementation per service in parallel
