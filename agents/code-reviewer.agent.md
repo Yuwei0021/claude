@@ -85,7 +85,7 @@ Judge test quality directly from the diff. You are read-only: a missing or weak 
 - Review the diff line by line. Do not rely on high-level summaries.
 - **Every finding must be self-contained and actionable**: a stable ID (`CR-1`, `CR-2`, … numbered across the whole report), a severity (`Critical` / `Recommended` / `Minor`), the affected `file:line`, a one-sentence rationale, and an inline Before/After code block. The finding IS the recommendation — no separate recommendations section. These IDs are consumed later by the developer agent in review-fix mode.
 - Report structure:
-  - **Summary Table**: service(s) reviewed, **review surface** (comparison branch, merge-base, and committed / uncommitted / untracked file counts), changed packages, related work item (ID or "None"), review dimensions applied, finding counts per severity.
+  - **Review Surface**: one short paragraph — service(s) reviewed, comparison branch, merge-base, committed / uncommitted / untracked file counts, related work item (ID or "None").
   - **Functional Alignment**: per-acceptance-criterion assessment and any functional gaps ("Not Applicable" if no work item).
   - **Critical Findings (Must Fix)**: bugs, resource/memory leaks, security vulnerabilities, major architectural violations.
   - **Recommended Improvements**: performance, functional patterns, OOP design refactorings.

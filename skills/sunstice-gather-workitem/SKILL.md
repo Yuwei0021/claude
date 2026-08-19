@@ -1,9 +1,9 @@
 ---
-name: gather-workitem
+name: sunstice-gather-workitem
 description: Verify Azure DevOps MCP, then delegate to the workitem-gatherer agent to retrieve full work item details (comments, links, parent, relations, attachments) and save them to a work item context markdown file; finally update the chat session name and present the summary.
 ---
 
-# `/gather-workitem` — Gather Azure DevOps Work Item Context
+# `/sunstice-gather-workitem` — Gather Azure DevOps Work Item Context
 
 Verify Azure DevOps MCP, then delegate the gathering to the **workitem-gatherer** subagent so raw ADO payloads stay out of the main conversation. The subagent writes the structured context file; the orchestrator only handles session naming and the user-facing summary.
 

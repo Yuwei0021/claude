@@ -1,9 +1,9 @@
 ---
-name: pr-description
+name: sunstice-pr-description
 description: Write one PR description per touched service for a feature or fix, from the branch diff and the feature decision record. Four fixed sections, hard 2500-character limit per file, saved under the feature folder ready to paste into Azure DevOps.
 ---
 
-# `/pr-description` — One PR Description per Service
+# `/sunstice-pr-description` — One PR Description per Service
 
 Produces a ready-to-paste PR description for **each** service touched by a feature or fix. Descriptions are written for the reviewer: why the change exists, what it commits to, and where to start reading.
 
@@ -41,7 +41,7 @@ Each section has a character budget. Budgets total ~2300 of the 2500 limit, so a
 | **Why** | 400 | The problem in the terms this service sees it. Two or three sentences. |
 | **Architecture & design** | 700 | The shape that changed (endpoints, schema, component) and the decisions behind it. Include a rejected alternative only where a reviewer would otherwise propose it. |
 | **Behavior** | 500 | The observable rules a reviewer can check against acceptance criteria. Numbered list when the rules are independent. |
-| **Review guide** | 600 | Reading order (which file first, and why), what to challenge, known-and-not-closed limitations, tests, and migration/deployment notes. |
+| **Review guide** | 600 | Reading order only: which file to read first, and why. Nothing else. |
 
 A section may borrow from another's budget — a change whose whole story is one config key needs little architecture and more caveats. The total is what is enforced.
 

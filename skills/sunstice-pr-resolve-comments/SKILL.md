@@ -1,10 +1,10 @@
 ---
-name: pr-resolve-comments
+name: sunstice-pr-resolve-comments
 description: Fetch unresolved (Active) comments on your open PR via Azure DevOps MCP and address each locally, without posting anything back to the PR.
 disable-model-invocation: true
 ---
 
-# `/pr-resolve-comments` — Address unresolved PR comments
+# `/sunstice-pr-resolve-comments` — Address unresolved PR comments
 
 Fetch unresolved (Active) comments on your open PR via Azure DevOps MCP and address each one locally.
 

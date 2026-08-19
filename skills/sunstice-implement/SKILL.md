@@ -1,10 +1,10 @@
 ---
-name: implement
+name: sunstice-implement
 description: Resolve the current feature, check the task files are still implementable, and run the developer agent per service in parallel at the model each task file asks for.
 model: sonnet
 ---
 
-# `/implement` — Run implementation per service in parallel
+# `/sunstice-implement` — Run implementation per service in parallel
 
 Resolve the current feature, verify its task files still hold, and invoke the developer agent per service.
 
@@ -16,7 +16,7 @@ The design phase already did the thinking and paid for the exploration. This pha
 - Else, parse from the Git branch name (`workitem-{id}-{slug}` or `feature-{id}-{slug}`).
 - Else, scan `features/feature-*/` folders; if exactly one exists, use it. If multiple, ask the user.
 - Feature file: `features/feature-{ID}-{title}/feature-{ID}-{title}.md`.
-- If not found, fail: _"No feature file found; run `/design` first or specify a feature ID."_
+- If not found, fail: _"No feature file found; run `/sunstice-design` first or specify a feature ID."_
 
 ## 2. Discover task files
 
@@ -33,7 +33,7 @@ For each task file, extract every repository path it names and check it:
 - A path marked **new** (to be created) is fine whether or not it exists.
 - A path presented as **existing** — a class to modify, a pattern to follow, a config to extend — **must exist**. If it does not, the design was written against code that has since moved, or the path is wrong.
 
-If any existing-path check fails, **stop before dispatching anything** and report which task file names which missing path. Ask whether to re-run `/design` for that service or to correct the path. Do not dispatch the other services "in the meantime" — if one task file was written against stale code, the others likely were too.
+If any existing-path check fails, **stop before dispatching anything** and report which task file names which missing path. Ask whether to re-run `/sunstice-design` for that service or to correct the path. Do not dispatch the other services "in the meantime" — if one task file was written against stale code, the others likely were too.
 
 Also confirm the feature file carries a **Cross-service contracts** section if more than one task file exists. Without a frozen seam, parallel services will code against different assumptions about the same interface.
 

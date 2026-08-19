@@ -1,10 +1,10 @@
 ---
-name: code-review
+name: sunstice-code-review
 description: Review changes in a service (Java or React) against origin/develop via the code-reviewer agent, and write a report under reviews/. Works standalone — your own work, or someone else's branch you have checked out — with or without an Azure DevOps work item for functional alignment.
 model: opus
 ---
 
-# `/code-review` — Service-Scoped Code Review
+# `/sunstice-code-review` — Service-Scoped Code Review
 
 Use this skill to orchestrate a comprehensive code review of changes in one or more services under `services/`. The **code-reviewer** subagent does the actual review; this skill only resolves scope, computes the report path, invokes the subagent, and handles the follow-up.
 
@@ -12,9 +12,9 @@ Use this skill to orchestrate a comprehensive code review of changes in one or m
 
 | Situation                                       | How to run it                                                                                                                                                                              |
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Reviewing **your own** work before opening a PR | `/code-review <service>` — the usual case                                                                                                                                                  |
-| Reviewing **someone else's** branch or PR       | Fetch and check out their branch in `services/<service>` **first**, then `/code-review <service>`. The reviewer diffs `<comparison-branch>...HEAD`, so it reviews whatever is checked out. |
-| Reviewing with **functional context**           | Run `/gather-workitem <ID>` first — even for a work item that is not yours — then `/code-review`. The reviewer will check the changes against the acceptance criteria.                     |
+| Reviewing **your own** work before opening a PR | `/sunstice-code-review <service>` — the usual case                                                                                                                                                  |
+| Reviewing **someone else's** branch or PR       | Fetch and check out their branch in `services/<service>` **first**, then `/sunstice-code-review <service>`. The reviewer diffs `<comparison-branch>...HEAD`, so it reviews whatever is checked out. |
+| Reviewing with **functional context**           | Run `/sunstice-gather-workitem <ID>` first — even for a work item that is not yours — then `/sunstice-code-review`. The reviewer will check the changes against the acceptance criteria.                     |
 
 A work item is **optional in every case**. Without one, functional alignment is simply marked Not Applicable and the technical review is unaffected.
 

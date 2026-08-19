@@ -1,16 +1,16 @@
 ---
-name: bug-fix
+name: sunstice-bug-fix
 description: Diagnose and fix a bug — reproduce it, find the root cause with evidence, check which other callers share it, get the diagnosis confirmed, then apply the smallest fix plus a regression test. Use instead of design/implement when something is broken rather than missing.
 model: opus
 ---
 
-# `/bug-fix` — Diagnose first, then fix small
+# `/sunstice-bug-fix` — Diagnose first, then fix small
 
 A feature is a decision problem: you choose what to build, and the risk is leaving something out. **A bug is a discovery problem**: you find out why something is wrong, and the risk is fixing the symptom, or fixing the one call path in the ticket while its siblings stay broken.
 
 So the gate here is not a design you approve — it is a **diagnosis** you approve, before any code is written. A wrong root cause wastes the whole fix.
 
-Do not use `/design` or `/implement` for this. Do not produce a feature file, a decisions table, an invariant, or a UI state table — none of them earn their place on a bug.
+Do not use `/sunstice-design` or `/sunstice-implement` for this. Do not produce a feature file, a decisions table, an invariant, or a UI state table — none of them earn their place on a bug.
 
 ## 1. Get the context
 
@@ -41,7 +41,7 @@ Grep **every caller** of the code you are about to change.
 
 A guard added in one caller while its siblings keep the old assumption is not a fix. Fixing it once where all callers route through is both the correct fix and — usually — the smaller diff.
 
-**If the true root-cause fix turns out to be architectural** — it needs a new interface, a data model change, or a redesign of how the services interact — **stop here.** That is a design problem wearing a bug's clothes. Report what you found and route the user to `/design`. Discovering this at step 4 is cheap; discovering it halfway through a "quick fix" is not.
+**If the true root-cause fix turns out to be architectural** — it needs a new interface, a data model change, or a redesign of how the services interact — **stop here.** That is a design problem wearing a bug's clothes. Report what you found and route the user to `/sunstice-design`. Discovering this at step 4 is cheap; discovering it halfway through a "quick fix" is not.
 
 ## 5. ⛔ Confirm the diagnosis
 
@@ -90,7 +90,7 @@ Use `sonnet` unless the fix is genuinely intricate — the diagnosis was the har
 
 The developer agent carries the scope rules — no refactoring, no "while I was in here" improvements, other problems reported rather than fixed. They are in `developer.agent.md` under "Bug-Fix Mode", and that is the copy that is in force when the code is written. Do not restate them in the invocation prompt.
 
-What you own here is the reaction: if the developer reports that the fix cannot be kept small, that is the step 4 signal arriving late. It means this is a design problem, not a bug. Stop and route the user to `/design` rather than approving a larger diff.
+What you own here is the reaction: if the developer reports that the fix cannot be kept small, that is the step 4 signal arriving late. It means this is a design problem, not a bug. Stop and route the user to `/sunstice-design` rather than approving a larger diff.
 
 **None of this relaxes the definition of done.** The build passes, the tests pass, and the regression test demonstrably goes red-then-green. A bug fix ships to production exactly like a feature does.
 

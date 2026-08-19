@@ -1,10 +1,10 @@
 ---
-name: design
+name: sunstice-design
 description: Design a cross-service feature from a gathered work item context file — restate the business rules for the user to validate, produce a short decision-record feature file, and after confirmation write the per-service implementation task files.
 model: opus
 ---
 
-# `/design` — Plan from gathered work item context
+# `/sunstice-design` — Plan from gathered work item context
 
 Turn the context file produced by `gather-workitem` into a cross-service design and per-service task files under `features/feature-{ID}-{short-title}/`.
 
@@ -107,7 +107,7 @@ Required sections, in order:
 
 ### Cross-service contracts (mandatory when more than one service is in scope)
 
-`/implement` runs one developer agent **per service, in parallel**. If ui-bloom's task file assumes an endpoint that `micro-service-enterprise-process` is creating in the same wave, ui-bloom codes against something that does not exist yet, both agents report success, and the failure only appears when the two halves meet.
+`/sunstice-implement` runs one developer agent **per service, in parallel**. If ui-bloom's task file assumes an endpoint that `micro-service-enterprise-process` is creating in the same wave, ui-bloom codes against something that does not exist yet, both agents report success, and the failure only appears when the two halves meet.
 
 Parallel implementation is sound only when the interface is frozen _before_ either side starts. So for every seam this feature creates or changes, pin it here:
 
@@ -200,7 +200,7 @@ Then write the task files.
 
 Write `features/feature-{ID}-{short-title}/tasks/{service-name}.md`, one per service. **This is where the implementation spec lives** — the detail that used to bloat the feature file.
 
-Start every task file with a header the `/implement` skill reads:
+Start every task file with a header the `/sunstice-implement` skill reads:
 
 ```markdown
 Service: micro-service-enterprise-process
@@ -213,7 +213,7 @@ Set `Model:` deliberately — you have just explored this service and know where
 Make each file **self-contained for the developer agent**: a developer that has to re-explore the service to understand its task wastes the tokens this phase already spent. Include:
 
 - **What is already verified** — the facts exploration established, so the developer does not re-derive them.
-- **Every existing path it names must exist right now.** `/implement` checks this mechanically before dispatching, and a task file pointing at a class that is not there stops the whole run. Mark anything to be created as new.
+- **Every existing path it names must exist right now.** `/sunstice-implement` checks this mechanically before dispatching, and a task file pointing at a class that is not there stops the whole run. Mark anything to be created as new.
 - **Ordered work items**, each naming the exact files, classes, endpoints, and existing patterns to follow.
 - **A file checklist** — every path to create or modify.
 - **Test expectations** — which unit/component tests must exist and what they must prove.
