@@ -77,7 +77,7 @@ The developer agent only changes code inside its own service. Nothing is ever se
 
 ### 6. Summary (chat only)
 
-Every reply you draft is text a colleague will read on the pull request. Write for a reader whose first language is not English: short sentences, common words, active voice. No idioms and no metaphors — say the literal thing. Real technical terms stay (index, migration, race condition, optimistic lock, merge-base); rare general-purpose words do not.
+Every reply you draft is text a colleague will read on the pull request. Root `AGENTS.md` plain-English rule applies.
 
 Report in chat, per thread: `threadId`, file/line, the author, what was done (fixed in code / answered / declined / left open), and the **reply text and thread status** for the user to post by hand. Keep the FMBUILD threads as one group and the human threads listed separately — they need different follow-up.
 

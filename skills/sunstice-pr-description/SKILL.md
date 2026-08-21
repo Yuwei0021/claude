@@ -22,7 +22,7 @@ Path: `features/feature-{ID}-*/pr-descriptions/{service-name}.md` (or `fixes/fix
 
 Full prose — this is saved, outward-facing text, so no caveman compression whatever the session style.
 
-Write for a reader whose first language is not English: short sentences, common words, active voice. No idioms and no metaphors — say the literal thing. Real technical terms stay (index, migration, race condition, optimistic lock, merge-base); rare general-purpose words do not. Reviewers on this team read English as a second language, and a PR description that is hard to read gets skimmed instead of reviewed.
+Root `AGENTS.md` plain-English rule applies. Reviewers on this team read English as a second language, and a PR description that is hard to read gets skimmed instead of reviewed.
 
 Structure, exactly these four `##` sections, preceded by one unnumbered header line:
 

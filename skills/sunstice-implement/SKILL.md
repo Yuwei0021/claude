@@ -1,7 +1,6 @@
 ---
 name: sunstice-implement
 description: Resolve the current feature, check the task files are still implementable, and run the developer agent per service in parallel at the model each task file asks for.
-model: sonnet
 ---
 
 # `/sunstice-implement` — Run implementation per service in parallel
@@ -67,6 +66,6 @@ All invocations run concurrently. Each developer agent reads its own service's `
 
 ## 6. Report
 
-Write for a reader whose first language is not English: short sentences, common words, active voice. No idioms and no metaphors — say the literal thing. Real technical terms stay (index, migration, race condition, optimistic lock, merge-base); rare general-purpose words do not. This applies to the summary and to any task file you update.
+Root `AGENTS.md` plain-English rule applies. This applies to the summary and to any task file you update.
 
 When the agents return, summarize per service: what was implemented, the build and test result, the model used, and — most importantly — **any mismatch a developer agent reported** because something its task file assumed turned out to be false. A mismatch means the design and the code disagreed. Report it instead of hiding it in a success summary, and update the task file so the record matches what was really built.

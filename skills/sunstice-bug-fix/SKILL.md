@@ -1,7 +1,6 @@
 ---
 name: sunstice-bug-fix
 description: Diagnose and fix a bug — reproduce it, find the root cause with evidence, check which other callers share it, get the diagnosis confirmed, then apply the smallest fix plus a regression test. Use instead of design/implement when something is broken rather than missing.
-model: opus
 ---
 
 # `/sunstice-bug-fix` — Diagnose first, then fix small
@@ -47,7 +46,7 @@ A guard added in one caller while its siblings keep the old assumption is not a 
 
 Write `fixes/fix-{ID}-{short-title}/fix-{ID}-{short-title}.md` — short, around 30 lines.
 
-Write for a reader whose first language is not English: short sentences, common words, active voice. No idioms and no metaphors — say the literal thing. Real technical terms stay (index, migration, race condition, optimistic lock, merge-base); rare general-purpose words do not. This file is the gate the user approves, so it has to be readable at first pass.
+Root `AGENTS.md` plain-English rule applies. This file is the gate the user approves, so it has to be readable at first pass.
 
 
 

@@ -1,55 +1,54 @@
 ---
 name: sunstice-design
 description: Design a cross-service feature from a gathered work item context file — restate the business rules for the user to validate, produce a short decision-record feature file, and after confirmation write the per-service implementation task files.
-model: opus
 ---
 
 # `/sunstice-design` — Plan from gathered work item context
 
 Turn the context file produced by `gather-workitem` into a cross-service design and per-service task files under `features/feature-{ID}-{short-title}/`.
 
-Two documents come out of this skill, and they have **different readers**:
+Two documents come out, with **different readers**:
 
-| Document                        | Reader                                    | Contains                      |
-| ------------------------------- | ----------------------------------------- | ----------------------------- |
+| Document | Reader | Contains |
+| --- | --- | --- |
 | `feature-{ID}-{short-title}.md` | **the human**, who approves or rejects it | decisions, and only decisions |
-| `tasks/{service}.md`            | the developer agent                       | the full implementation spec  |
+| `tasks/{service}.md` | the developer agent | the full implementation spec |
 
 Never write implementation spec into the feature file. It is the single biggest reason these documents become unreadable.
 
-**Language, in both documents.** Write for a reader whose first language is not English: short sentences, common words, active voice. No idioms and no metaphors — say the literal thing. Real technical terms stay (index, migration, race condition, optimistic lock, merge-base); rare general-purpose words do not. The feature file is the one the user reads to approve or reject the design, so a sentence they have to read twice is a defect in the design record.
+Root `AGENTS.md` plain-English rule applies to both documents. The feature file is what the user reads to approve or reject, so a sentence they have to read twice is a defect in the design record.
 
-**The feature folder holds a closed set of files** — the work item context, the feature decision record, and `tasks/{service}.md`. Nothing else. Review reports go to `reviews/`; investigation scripts, data dumps, and scratch output go somewhere outside `features/`. A feature folder that accumulates working files stops being a place anyone can find the design in.
+**The feature folder holds a closed set of files** — work item context, feature decision record, `tasks/{service}.md`. Nothing else. Review reports go to `reviews/`; scripts, data dumps and scratch output go outside `features/`.
 
 ## 1. Locate the work item context file
 
 - Find `features/feature-{ID}-{short-title}/workitem-{ID}-context.md`, or scan `features/` for a `feature-{ID}-*` directory containing one.
-- If it is missing, tell the user to run `gather-workitem` first.
-- Read the **Summary** section first. Read the full sections (comments, attachments) only if the Summary leaves scope or acceptance criteria ambiguous. Never read saved attachment files (logs, exports) into the main context — delegate that to an `Explore` subagent and use its conclusion.
+- Missing: tell the user to run `gather-workitem` first.
+- Read the **Summary** section first. Read the full sections (comments, attachments) only if the Summary leaves scope or acceptance criteria ambiguous. Never read saved attachment files (logs, exports) into the main context — delegate to an `Explore` subagent and use its conclusion.
 
 ## 2. Resolve the required services
 
-- Determine which services the work item touches. Root `AGENTS.md` is the source of truth for valid names under "High-level service responsibilities".
-- If `services/{service-name}` is missing but the service is listed in root `AGENTS.md`, stop and ask the user to add it under `services/` (clone or symlink it) before designing. Do not design against a service you cannot read.
-- If a required service is in neither, stop and ask the user to confirm the intended name.
+- Determine which services the work item touches. The **Service index** in root `AGENTS.md` is the source of truth for valid names. Read `.agents/service-map.md` only when you need a port, base path, or datastore.
+- If `services/{service-name}` is missing but the service is in the index, stop and ask the user to add it under `services/` (clone or symlink) before designing. Do not design against a service you cannot read.
+- In neither: stop and ask the user to confirm the intended name.
 
 ## 3. Explore — keeping token use low
 
-This pass serves two purposes: it grounds the design, **and** it supplies the evidence for the business-rule restatement in step 4. Brief the explorers for both — for each acceptance criterion that touches their service, ask them to report **what the code does today**, what rules the code already enforces that the item never mentions, and anything the criterion names that does not exist. One pass, both answers.
+This pass grounds the design **and** supplies the evidence for step 4. Brief the explorers for both: for each acceptance criterion touching their service, ask what **the code does today**, what rules the code already enforces that the item never mentions, and anything the criterion names that does not exist. One pass, both answers.
 
-- Delegate code exploration to `Explore` subagents, one per service, run concurrently, with `model: haiku` — locating code is mechanical.
-- Keep only their conclusions in the main context. Do not read large service source trees directly; read directly only the handful of files the design actually modifies or extends.
-- The design reasoning itself stays in this session on the strongest model. This is the phase where model quality matters most.
+- Delegate to `Explore` subagents, one per service, run concurrently, with `model: haiku` — locating code is mechanical.
+- Keep only their conclusions in the main context. Read directly only the handful of files the design actually modifies or extends.
+- The design reasoning stays in this session on the strongest model.
 
 ## 4. Restate the business rules — and get them validated
 
 **The work item is a claim about the world, not a description of it.** A PO writes what they were thinking about that day; what they forgot is invisible in the text and only shows up when someone who knows the domain reads a restatement back. That person is the user, not you.
 
-So before designing anything, present **your own understanding** of the business rules and wait for the user to validate it. Never paste or lightly reword the work item — a copy proves nothing, and if you misread the item the copy hides it. Write what you believe the system must do, in your words, grounded in what step 3 found in the code.
+Present **your own understanding** of the business rules and wait for the user to validate it. Never paste or lightly reword the work item — a copy proves nothing, and if you misread the item the copy hides it. Write what you believe the system must do, in your words, grounded in what step 3 found in the code.
 
 Try to cover **everything**. A rule you leave out is a rule nobody validates.
 
-Number every rule `BR-1`, `BR-2`, … so the user can reply "BR-4 is wrong" instead of describing which one they mean. Group them in three, because the gaps are the point:
+Number every rule `BR-1`, `BR-2`, … so the user can reply "BR-4 is wrong". Group them in three, because the gaps are the point:
 
 ```markdown
 ## Business rules as I understand them — please validate
@@ -57,13 +56,11 @@ Number every rule `BR-1`, `BR-2`, … so the user can reply "BR-4 is wrong" inst
 ### Stated — written in the work item
 
 - **BR-1** — A deployed template can be edited only through a new version; the deployed one stays frozen.
-- **BR-2** — …
 
 ### Implied — the code already enforces this, or the feature cannot work without it
 
 - **BR-5** — A template group has at most one SCHEDULED version at a time.
   _(`TemplateDeploymentService.deploy()` already rejects a second one — the item never says this.)_
-- **BR-6** — …
 
 ### Silent — the item gives no answer and I would otherwise have to choose
 
@@ -72,13 +69,13 @@ Number every rule `BR-1`, `BR-2`, … so the user can reply "BR-4 is wrong" inst
 - **BR-11** — On a deploy failure midway, is the operation retryable, or left half-applied?
 ```
 
-Annotate any rule where the code disagrees with the item, rather than running a separate classification pass:
+Annotate any rule where the code disagrees with the item:
 
 - _the item asks for X, but `TemplateDeploymentService.deploy()` has enforced the opposite since `<commit>` — which wins?_
 - _the item names a `versionLabel` field; no such field exists — new field, or does it mean `versionNumber`?_
-- _this already works today — is it in scope as a regression guard, or was it forgotten?_
+- _this already works today — in scope as a regression guard, or forgotten?_
 
-**Stop here and wait.** Do not design, do not write the feature file, do not "start on the parts that are clear". Do not resolve a Silent rule by picking the reading that makes the design easier — that is precisely the choice the user is there to make. When the user corrects or adds rules, restate the corrected list back if the change is substantial, then continue.
+**Stop here and wait.** Do not design, do not write the feature file, do not "start on the parts that are clear". Do not resolve a Silent rule by picking the reading that makes the design easier — that is the choice the user is there to make. When the user corrects or adds rules, restate the corrected list back if the change is substantial, then continue.
 
 The validated list is the input to everything downstream: the Decisions table, the acceptance-criteria walk, and the task files all trace back to these `BR-n` identifiers.
 
@@ -91,43 +88,43 @@ Write `features/feature-{ID}-{short-title}/feature-{ID}-{short-title}.md`.
 
 Required sections, in order:
 
-| Section                                   | Contents                                                                                                                                                                                                                                                                    |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Goal**                                  | 5 lines max: what changes for the user, and why now.                                                                                                                                                                                                                        |
-| **Business rules**                        | The validated `BR-n` list from step 4, in its final corrected form. This is the contract the design answers to.                                                                                                                                                             |
-| **Open questions**                        | Anything from step 4 the user left unresolved. Empty section if none — never omit the heading.                                                                                                                                                                              |
-| **Invariant**                             | **One line**, the single property the whole design rests on — the thing that must stay true no matter the order of operations. A design that cannot name one is usually just a list of cases, and the adversary pass in step 7 will attack this line first. |
-| **Decisions**                             | Table: `Decision \| Why \| Alternative rejected`. This is the most important part of the document. One row per choice a reasonable engineer could have made differently.                                                                                                                  |
-| **Flow**                                  | One Mermaid sequence diagram of the cross-service interaction. One. Not per-service diagrams.                                                                                                                                                                               |
-| **Cross-service contracts**               | **Mandatory when more than one service is in scope. See below.**                                                                                                                                                                                                            |
-| **Existing data & migration**             | **Mandatory — see below.**                                                                                                                                                                                                                                                  |
-| **Acceptance criteria — end-to-end walk** | **Mandatory — see below.**                                                                                                                                                                                                                                                  |
-| **UI states**                             | Only when `ui-bloom` is in scope. **See below.**                                                                                                                                                                                                                            |
-| **Per-service scope**                     | One line per service: what it owns in this feature. Not how.                                                                                                                                                                                                                |
-| **Out of scope**                          | What was considered and deliberately excluded.                                                                                                                                                                                                                              |
-| **Risks**                                 | Accepted gaps, with why they are acceptable.                                                                                                                                                                                                                                |
+| Section | Contents |
+| --- | --- |
+| **Goal** | 5 lines max: what changes for the user, and why now. |
+| **Business rules** | The validated `BR-n` list from step 4, final corrected form. The contract the design answers to. |
+| **Open questions** | Anything from step 4 the user left unresolved. Empty section if none — never omit the heading. |
+| **Invariant** | **One line**: the single property the whole design rests on, the thing that must stay true no matter the order of operations. A design that cannot name one is usually just a list of cases, and step 7 attacks this line first. |
+| **Decisions** | Table: `Decision \| Why \| Alternative rejected`. The most important part of the document. One row per choice a reasonable engineer could have made differently. |
+| **Flow** | One Mermaid sequence diagram of the cross-service interaction. One — not per-service diagrams. |
+| **Cross-service contracts** | **Mandatory when more than one service is in scope.** See below. |
+| **Existing data & migration** | **Mandatory.** See below. |
+| **Acceptance criteria — end-to-end walk** | **Mandatory.** See below. |
+| **UI states** | Only when `ui-bloom` is in scope. See below. |
+| **Per-service scope** | One line per service: what it owns in this feature. Not how. |
+| **Out of scope** | Considered and deliberately excluded. |
+| **Risks** | Accepted gaps, with why they are acceptable. |
 
 ### Cross-service contracts (mandatory when more than one service is in scope)
 
-`/sunstice-implement` runs one developer agent **per service, in parallel**. If ui-bloom's task file assumes an endpoint that `micro-service-enterprise-process` is creating in the same wave, ui-bloom codes against something that does not exist yet, both agents report success, and the failure only appears when the two halves meet.
+`/sunstice-implement` runs one developer agent **per service, in parallel**. If ui-bloom's task file assumes an endpoint that `micro-service-enterprise-process` is creating in the same wave, ui-bloom codes against something that does not exist, both agents report success, and the failure appears only when the two halves meet.
 
-Parallel implementation is sound only when the interface is frozen _before_ either side starts. So for every boundary this feature creates or changes, pin it down here:
+Parallel implementation is sound only when the interface is frozen _before_ either side starts. For every boundary this feature creates or changes:
 
-|              | Specify                                                                    |
-| ------------ | -------------------------------------------------------------------------- |
-| **Endpoint** | method + full path, in the workspace's camelCase convention                |
-| **Request**  | field names and types — the actual shape, not a description of it          |
-| **Response** | success shape, and the status code for each outcome                        |
-| **Errors**   | what the consumer receives on a rejected request, and on a partial failure |
-| **Owner**    | which service implements it; every other service consumes it as written    |
+| | Specify |
+| --- | --- |
+| **Endpoint** | method + full path, in the workspace's camelCase convention |
+| **Request** | field names and types — the actual shape, not a description of it |
+| **Response** | success shape, and the status code for each outcome |
+| **Errors** | what the consumer receives on a rejected request, and on a partial failure |
+| **Owner** | which service implements it; every other service consumes it as written |
 
-Both task files then reference this section rather than restating it — one definition, two readers. Mark it **frozen**: a developer agent that wants to change a shared interface must stop and report, not adapt its own side.
+Both task files reference this section rather than restating it. Mark it **frozen**: a developer agent that wants to change a shared interface must stop and report, not adapt its own side.
 
-If a boundary cannot be pinned down yet, that is not a detail to settle during implementation — it is an open question for step 4.
+A boundary that cannot be pinned down yet is not a detail for implementation — it is an open question for step 4.
 
 ### Existing data & migration (mandatory)
 
-Production already has data. Designs that only cover the new happy path are the single largest source of `Critical` review findings in this workspace — a unique index that was never dropped, a new field that was never backfilled. Both were invisible in review of the _new_ code and fatal in any existing environment.
+Production already has data. Designs covering only the new happy path are the largest source of `Critical` review findings in this workspace — a unique index never dropped, a new field never backfilled. Both were invisible in review of the _new_ code and fatal in any existing environment.
 
 State explicitly, even when the answer is "nothing":
 
@@ -138,7 +135,7 @@ State explicitly, even when the answer is "nothing":
 
 ### Acceptance criteria — end-to-end walk (mandatory)
 
-Not a mapping of AC → component. A mapping passes while the feature is still broken. For each AC, write the **user-visible sequence through states**:
+Not a mapping of AC → component: a mapping passes while the feature is still broken. For each AC, write the **user-visible sequence through states**:
 
 > AC3 "expansion persists during the session" → user expands node → navigates away → returns → **state must survive the Dashboard unmounting** → therefore the state lives in the Redux store, not component state.
 
@@ -150,27 +147,27 @@ The UI defects that reach review here are **state** defects, not layout defects:
 
 Per affected screen, enumerate every state and name the owner:
 
-| State                    | What renders | Which component owns it | AC  |
-| ------------------------ | ------------ | ----------------------- | --- |
-| empty                    | …            | …                       | —   |
-| loading                  | …            | …                       | —   |
-| error                    | …            | …                       | —   |
-| disabled because _X_     | …            | …                       | AC2 |
-| freshly created / seeded | …            | …                       | AC4 |
-| after save               | …            | …                       | AC4 |
-| after remount / revisit  | …            | …                       | AC3 |
+| State | What renders | Which component owns it | AC |
+| --- | --- | --- | --- |
+| empty | … | … | — |
+| loading | … | … | — |
+| error | … | … | — |
+| disabled because _X_ | … | … | AC2 |
+| freshly created / seeded | … | … | AC4 |
+| after save | … | … | AC4 |
+| after remount / revisit | … | … | AC3 |
 
-Cover at minimum: empty, loading, error, each distinct disabled reason, freshly-created, after-save, and after-remount. A state with no owner is a state the code will get wrong.
+Cover at minimum: empty, loading, error, each distinct disabled reason, freshly-created, after-save, after-remount. A state with no owner is a state the code will get wrong.
 
-**When the user supplies a screenshot or mockup of the desired design**, it is a design input, not decoration — read it and design to it. Screenshots range from a rough sketch to a near-final screen; say which you got, because it changes what you may infer:
+**When the user supplies a screenshot or mockup**, it is a design input, not decoration. Say whether you got a rough sketch or a near-final screen, because it changes what you may infer.
 
 - Treat everything visible as **intended**: layout, control placement, labels, columns, grouping, empty-state wording, which controls appear disabled. Do not silently redesign it because another arrangement is easier to build.
-- Derive states from it. A screenshot is **one** state — usually the populated happy path. Add its state to the table as the one that is pinned, and enumerate the rest yourself; note in the Decisions table which states the screenshot did not show.
-- Reconcile it with the work item and with the code exploration. Where the screenshot contradicts an AC, or shows a field or action that does not exist in the service, that is a Silent rule for step 4 — ask, do not pick.
-- Where the screenshot is incomplete or ambiguous (cropped region, illegible label, no error/empty variant), name the gap explicitly rather than inventing the missing part.
-- Map what it shows onto real Bloom components and design tokens, and record in the Decisions table anywhere you deviate from the screenshot and why. A screenshot that came from another product is a reference for intent, not a spec for markup.
+- A screenshot is **one** state, usually the populated happy path. Add it to the table as the pinned state, enumerate the rest yourself, and note in Decisions which states it did not show.
+- Reconcile it with the work item and the code exploration. Where it contradicts an AC, or shows a field or action that does not exist in the service, that is a Silent rule for step 4 — ask, do not pick.
+- Where it is incomplete or ambiguous (cropped region, illegible label, no error/empty variant), name the gap rather than inventing the missing part.
+- Map what it shows onto real Bloom components and design tokens. Record in Decisions anywhere you deviate from it and why. A screenshot from another product is a reference for intent, not a spec for markup.
 
-**Optional, for genuinely new layouts**: build a self-contained HTML mockup and publish it as an Artifact for the user to open before the `ui-bloom` task file is written. Use the real Bloom design tokens — a mockup that does not resemble the app misleads more than it helps. Skip it for changes to existing screens; the state table is the higher-value artifact.
+**Optional, for genuinely new layouts**: build a self-contained HTML mockup with the real Bloom design tokens and publish it as an Artifact before the `ui-bloom` task file is written. Skip it for changes to existing screens — the state table is the higher-value artifact.
 
 ## 6. Present and wait for confirmation
 
@@ -178,7 +175,7 @@ Present the feature file and ask for explicit confirmation. If the user does not
 
 ## 7. After confirmation — attack the design before writing anything
 
-The design is now final and about to become code. This is the last moment a defect is free to fix, and the version the user just confirmed — including whatever they changed while reviewing it — is the version that must be checked. Those conversational edits are the least-examined part of the whole design: made quickly, mid-discussion, without a fresh exploration pass.
+The design is now final and about to become code. This is the last moment a defect is free to fix, and the version the user just confirmed — including whatever they changed while reviewing it — is the version that must be checked. Those conversational edits are the least-examined part of the whole design.
 
 Invoke the **design-adversary** agent, one per feature:
 
@@ -187,22 +184,22 @@ Attack the confirmed design at "features/feature-{ID}-{short-title}/feature-{ID}
 Services in scope: {service-a}, {service-b}.
 ```
 
-Do not summarize the design for it and do not defend the design to it. It reads the artifact and the code itself — that independence is the whole point, since you wrote the design and are too close to it.
+Do not summarize the design for it and do not defend the design to it. It reads the artifact and the code itself — that independence is the point, since you wrote the design.
 
 When it returns:
 
-- Present its findings to the user, grouped by severity, in a few lines each. Do **not** silently fix them.
-- For each `Critical` and `Gap`, say whether you agree, and why. You are allowed to disagree — the adversary works from the artifact and can miss intent — but say so explicitly rather than quietly dropping the finding.
+- Present its findings to the user, grouped by severity, a few lines each. Do **not** silently fix them.
+- For each `Critical` and `Gap`, say whether you agree and why. You may disagree — the adversary works from the artifact and can miss intent — but say so rather than quietly dropping the finding.
 - If anything changes the design, update the feature file (Decisions table, not an appendix) and re-confirm with the user before continuing.
-- If nothing survives, say so in one line and move on. Do not pad.
+- If nothing survives, say so in one line. Do not pad.
 
 Then write the task files.
 
 ## 8. Write the per-service task files
 
-Write `features/feature-{ID}-{short-title}/tasks/{service-name}.md`, one per service. **This is where the implementation spec lives** — the detail that used to bloat the feature file.
+Write `features/feature-{ID}-{short-title}/tasks/{service-name}.md`, one per service. **This is where the implementation spec lives.**
 
-Start every task file with a header the `/sunstice-implement` skill reads:
+Start every task file with a header `/sunstice-implement` reads:
 
 ```markdown
 Service: micro-service-enterprise-process
@@ -210,12 +207,12 @@ Model: sonnet
 Complexity: normal
 ```
 
-Set `Model:` deliberately — you have just explored this service and know where the hard part is. `sonnet` is the default and is right for most work. Choose `opus` only for genuinely hard implementation: intricate concurrency, a non-obvious algorithm, or a change whose full effect you could not pin down during design. One service on `opus` and the rest on `sonnet` is a normal and good outcome; putting everything on `opus` wastes the work this phase just did.
+Set `Model:` deliberately — you just explored this service and know where the hard part is. `sonnet` is the default and right for most work. Choose `opus` only for genuinely hard implementation: intricate concurrency, a non-obvious algorithm, or a change whose full effect you could not pin down during design. One service on `opus` and the rest on `sonnet` is a normal, good outcome; everything on `opus` wastes the work this phase just did.
 
-Make each file **complete on its own for the developer agent**: a developer that has to explore the service again to understand its task wastes the tokens this phase already spent. Include:
+Make each file **complete on its own for the developer agent** — a developer that has to explore the service again wastes the tokens this phase already spent. Include:
 
 - **What is already verified** — the facts exploration established, so the developer does not re-derive them.
-- **Every existing path it names must exist right now.** `/sunstice-implement` checks this mechanically before dispatching, and a task file pointing at a class that is not there stops the whole run. Mark anything to be created as new.
+- **Every existing path it names must exist right now.** `/sunstice-implement` checks this mechanically before dispatching; a task file pointing at a class that is not there stops the whole run. Mark anything to be created as new.
 - **Ordered work items**, each naming the exact files, classes, endpoints, and existing patterns to follow.
 - **A file checklist** — every path to create or modify.
 - **Test expectations** — which unit/component tests must exist and what they must prove.

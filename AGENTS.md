@@ -2,32 +2,38 @@
 
 This repository is an AI agent workspace containing multiple cooperating services. This file is the canonical, discoverable summary agents should consult before planning or implementing changes.
 
-## High-level service responsibilities
+## Service index — who owns what
 
-- `services/supply-network` — Owns network structure, views, and UI-facing network data (graph, flow parts, views). Does NOT own calculation history.
-- `services/supply-optim` — Owns optimization execution, segmentation (sub-perimeters), report generation. Responsible for scalable execution (ActiveMQ queues, KEDA worker jobs) and S3 report storage.
-- `services/supply-planning` — Owns calculation records and long-term history; dual persistence (JPA/PostgreSQL for transactional data, MongoDB for document-style data and sub-perimeter records). Exposes SSE for calculation status.
-- `services/agent-builder` — Owns AI agent definition management (CRUD + publish/unpublish), persisting definitions in MongoDB and exposing MCP/OpenAI-oriented runtime configuration.
-- `services/micro-service-ai-supply_shortage_rca` — Owns automated root cause analysis for supply chain shortages, combining deterministic upstream graph traversal with agent-assisted inspection to produce ranked RCA findings and stream workflow progress over SSE.
-- `services/ui-bloom` — Owns the React monorepo frontend (`ui-bloom/packages/*`), shell (`packages/bloom`), and English locale edits (`packages/bloom/public/locales/en/`).
-- `services/library-fm-auth` — Shared Java library (not a deployable service) providing Keycloak/JWT authentication, Spring Security config, WorkScope context propagation, and Feign/RSocket auth interceptors. Published to Azure DevOps `micro-service-utilities` feed; consumed by backend services as a Maven dependency.
-- `services/library-calendar-util` — Shared Java library (not a deployable service) providing Bloom calendar/date domain primitives (`FMCalendar`, `FMDate`) and conversion/chronology logic for 12-month and 13-period year types with working-day-aware date operations.
-- `services/library-timeseries-util` — Shared Java library (not a deployable service) owning time-series I/O against Apache Doris (JDBC + Apache Arrow ADBC/Flight SQL) and detailed-series persistence in PostgreSQL via MyBatis. Provides Spring facades for load/save/revise/delete/promote, chronology resolution, formula-based calculated series, scenario operations, and time-series notes. Published to Azure DevOps `micro-service-utilities` feed.
-- `services/micro-service-time-series` — Owns time-series numeric values (load/save/delete/promote/revise/consolidate/sync), detailed series (Doris-backed), time-series definitions, cell-change notes, async task status, and import/export. Java 21, Spring Boot MVC + WebFlux, PostgreSQL (plain JDBC) for notes/definitions, Apache Doris (MySQL JDBC) for TS values, RSocket (TCP port 7000, WS port 7002) + REST (HTTP port 8096, base paths `/api/timeSeries`, `/api/detailedSeries`, `/api/notes`). Publishes a `time-series-client` artifact consumed by other services.
-- `services/micro-service-demand-planning` — Owns demand-planning and risks-and-opportunities back-end capabilities in one Spring Boot application, including node/config APIs, ML and batch operations, GraphQL endpoints, and dedicated risk-and-opportunity APIs/settings backed by MongoDB.
-- `services/micro-service-hypercube` — Owns multidimensional calculation engine: computes "layers" (from JSON config, time frames, perimeters, dimensions), persists results in MongoDB, exposes REST (`/hypercube`) and WebSocket (STOMP) for status push. Fetches raw data from fmlegacy-wrapper, time-series, and master-data services. Java 21, Spring Boot.
-- `services/micro-service-dashboard_indicator` — Owns indicator definitions and UI-facing indicator formatting/filtering, persists indicator configurations in MongoDB, and translates indicator requests into Hypercube computations.
-- `services/micro-service-iam` — Owns Identity and Access Management (IAM): user management, group management, role management, and Keycloak integration. Java 21, Spring Boot, PostgreSQL (transactional data), MongoDB (flexible document storage). REST base path `/api/iam`, port `8087`. Depends on `library-fm-auth` for Keycloak/JWT authentication.
-- `services/micro-service-top-down-splitting` — Owns Top Down Splitting backend capabilities, including rules/settings management, operation launch and progress tracking, and import/export workflows, with domain persistence and orchestration in the service.
-- `services/micro-service-BPM` — Owns process definitions (Camunda BPMN) and workflow runtime instances (user/service tasks). Runs Camunda BPM 7.21 on port `9001` with context path `/bpm`. Integrates custom service tasks that orchestrate operations in other services.
-- `services/micro-service-collaboration` — Owns collaboration sessions (CRUD + lifecycle), messages, tasks, and real-time notifications (WebSocket). REST base path `/api/collaboration`, port `8100`, MongoDB collection `collaborationSession`. Key endpoint: `POST /collaborations` to create a collaboration with title, collaborators, description, and contextual links.
-- `services/micro-service-enterprise-process` — Owns enterprise-wide business processes, milestone schedule rules, and phase/step validation constraints. Runs on port `8102` and persists template designs in MongoDB.
-- `services/micro-service-master-data` — Stores and manages the referential supply chain master data (axes, items, nodes, selections, UOMs, calendars). Runs on HTTP port `8084` and RSocket port `7000`, persisting in PostgreSQL, with component tests running on H2.
-- `services/micro-service-query-tool` — Manages query reports and runs domain-specific batch actions (Demand Planning, Master Data, TPM). Runs on port `8083` and persists report metadata/results in MongoDB.
-- `services/micro-service-scenario` — Owns scenario lifecycle management (list/create/update/delete), scenario ancestry, scenario promotion, lifecycle SSE events for promotion/deletion awareness, and per-user current-scenario selection. Java 21 Spring Boot service on port `8095`, backed by MongoDB database `scenario`, with REST controllers rooted at `/scenarios` and `/users`.
-- `services/dolap-bff` — Backend-for-Frontend proxy for the DOLAP/Analyzer module. Routes browser requests to the DOLAP OLAP engine (`${dolap-base-url}`). Port `8899`. Key endpoints: `POST /api/olap/getNodeList` (active nodes in an Analyzer view), `POST /api/olap/getTsList` (time series list), `POST /api/olap/getAnalyzerList`. Workspace context carried as `iid`/`rid`/`workScope` in every request body (`RequestBase`). `analyzerId` (long) identifies the Analyzer definition.
-- `services/micro-service-reverse-proxy` — Owns Nginx reverse-proxy routing for Bloom stack services and Keycloak-only deployments, including mode-based location configuration, startup template evaluation, and TLS-related runtime inputs.
-- `services/micro-service-documentation` — Owns FuturMaster end-user documentation delivery. Serves MadCap Flare HTML5 output via OpenResty (nginx + Lua) with Keycloak OIDC authentication (lua-resty-openidc). No backend logic; pure static-site container (`futurmastersolutions/micro-service-documentation`).
+One line per service, enough to route a change. Ports, base paths, datastores and tech stack
+live in `.agents/service-map.md` — read it when you need them.
+`services/{service}/AGENTS.md` is authoritative for that service; read it before touching it.
+
+| Service | Owns |
+| --- | --- |
+| `supply-network` | Network structure, views, UI-facing network data. **Not** calculation history. |
+| `supply-optim` | Optimization execution, segmentation (sub-perimeters), report generation. |
+| `supply-planning` | Calculation records and long-term history. |
+| `agent-builder` | AI agent definitions (CRUD, publish/unpublish). |
+| `micro-service-ai-supply_shortage_rca` | Root cause analysis for supply shortages. |
+| `ui-bloom` | React monorepo frontend. English locales only (`packages/bloom/public/locales/en/`). |
+| `library-fm-auth` | Shared library: Keycloak/JWT auth, Spring Security, WorkScope propagation. |
+| `library-calendar-util` | Shared library: calendar/date primitives (`FMCalendar`, `FMDate`), 12-month and 13-period years. |
+| `library-timeseries-util` | Shared library: time-series I/O against Doris, detailed series in PostgreSQL. |
+| `micro-service-time-series` | Time-series values, detailed series, definitions, cell-change notes, import/export. |
+| `micro-service-demand-planning` | Demand planning, plus risks and opportunities. |
+| `micro-service-hypercube` | Multidimensional calculation engine — computes layers, pushes status. |
+| `micro-service-dashboard_indicator` | Indicator definitions and UI-facing indicator formatting/filtering. |
+| `micro-service-iam` | Users, groups, roles, Keycloak integration. |
+| `micro-service-top-down-splitting` | Top Down Splitting rules/settings, operation launch and progress, import/export. |
+| `micro-service-BPM` | Camunda process definitions and workflow runtime instances. |
+| `micro-service-collaboration` | Collaboration sessions, messages, tasks, real-time notifications. |
+| `micro-service-enterprise-process` | Enterprise processes, milestone schedule rules, phase/step validation. |
+| `micro-service-master-data` | Referential master data: axes, items, nodes, selections, UOMs, calendars. |
+| `micro-service-query-tool` | Query reports and domain batch actions (Demand Planning, Master Data, TPM). |
+| `micro-service-scenario` | Scenario lifecycle, ancestry, promotion, per-user current scenario. |
+| `dolap-bff` | Backend-for-Frontend proxy for the DOLAP/Analyzer OLAP engine. |
+| `micro-service-reverse-proxy` | Nginx reverse-proxy routing for the Bloom stack. |
+| `micro-service-documentation` | End-user documentation static site (MadCap Flare output, OpenResty + Keycloak). |
 
 ## Global rules
 
@@ -63,6 +69,7 @@ This repository is an AI agent workspace containing multiple cooperating service
 ## Workspace layout
 
 - `.agents/` — the single source for skills, agents, and settings; no per-tool copies. `.claude` is a symlink to it, and `CLAUDE.md` imports this file, so Claude Code reads exactly what other tools read.
+- `.agents/service-map.md` — per-service ports, base paths, datastores and tech stack. Read on demand; not loaded every session.
 - `.agents/skills/` — `sunstice-design`, `sunstice-implement`, `sunstice-code-review`, `sunstice-bug-fix`, `sunstice-gather-workitem`, `sunstice-pr-description`, `sunstice-pr-resolve-comments`. Committing, PR creation, and releases are done by hand.
 - Something **broken** goes to `/sunstice-bug-fix` (diagnose → confirm → smallest fix + regression test), not through `/sunstice-design`. Something **missing** goes through `/sunstice-design` → `/sunstice-implement`.
 - `.agents/agents/` — `developer` (sonnet), `code-reviewer` (inherits), `design-adversary` (inherits), `workitem-gatherer` (haiku).
