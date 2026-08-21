@@ -57,10 +57,10 @@ Check no two dispatched reviewers resolve to the same path before launching.
 
 **Split or not, decided by the file count from step 1:**
 
-- **More than 12 changed files, or more than one `packages/*` directory** — split by Focus.
-- **12 or fewer in a single package** — one reviewer on **opus**, no `Focus` line, owning everything, writing to the `-correctness.md` path. Say in one line that you did not split, and how many files you counted.
+- **More than 5 changed files, or more than one `packages/*` directory** — split by Focus.
+- **5 or fewer in a single package** — one reviewer on **opus**, no `Focus` line, owning everything, writing to the `-correctness.md` path. Say in one line that you did not split.
 
-Both reviewers pull the same hunks, so a split pays for the same diff twice. That is worth it only when the diff is too large for one reviewer to read closely. Up to 12 files it is not, and the second read buys little. Count files, not lines: mechanical files (locale JSON, fixtures, snapshots, generated sources, lock files) do not count toward the 12, because no reviewer reads their bodies.
+The split exists so each reviewer can read a big diff closely. On a three-file change there is nothing to divide, and it pays for the same diff twice.
 
 When splitting, dispatch both reviewers per service — `Correctness` on **opus**, `Conventions` on **sonnet**. Convention and test-style work is pattern-matching against `AGENTS.md` and the surrounding code; simulating a half-applied write is not, so the opus budget goes where the reasoning is. They do not talk to each other, and that is the point: two reviewers with one job each find more than one reviewer doing both.
 
