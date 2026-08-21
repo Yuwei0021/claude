@@ -13,11 +13,12 @@ Agent configuration lives in **`.agents/`** (skills, agents, settings). **`.clau
 | Step | Command | What happens |
 |---|---|---|
 | 1 | **`/sunstice-gather-workitem`** | Identifies the in-progress work item (or one you name by ID) and fetches it with its parent, relations, comments and attachments into `features/feature-{ID}-*/workitem-{ID}-context.md`. Runs on the **workitem-gatherer** agent (Haiku) so raw ADO payloads stay out of the main context. |
-| 2 | **`/sunstice-design`** | Explores the touched services, then **restates the business rules in its own words — Stated, Implied, and Silent — for you to validate** before any design exists. Produces a short decision-record feature file. After your confirmation, the **design-adversary** agent attacks it, and only then are the per-service task files written. |
-| 3 | **`/sunstice-implement`** | Verifies every path the task files name still exists, then runs the **developer** agent per service in parallel at the model each task file asks for (`Model:` line, Sonnet by default). Each must pass a four-point definition of done: build, tests, every acceptance criterion walked end-to-end, and existing data verified on an *upgraded* environment. A developer that hits a false premise stops and reports the delta instead of re-planning. |
-| 4 | **`/sunstice-code-review`** | Runs the **code-reviewer** agent per service against `origin/develop`, writes a report under `reviews/`, and can apply the findings you accept via the developer agent. **Also usable on its own** — see below. |
-| 5 | *(open the PR by hand)* | |
-| 6 | **`/sunstice-pr-resolve-comments`** | Fetches unresolved PR comments (read-only — it never writes to the PR) and fixes each locally, drafting the replies for you to post. |
+| 2 | **`/sunstice-design`** | Explores the touched services, then **restates the business rules in its own words — Stated, Implied, and Silent — for you to validate** before any design exists. Produces a short decision-record feature file, which the **design-adversary** agent then attacks. You see the design and the attack together and approve once; the per-service task files are written after that. |
+| 3 | **`/sunstice-implement`** | Verifies every path the task files name still exists, then runs the **developer** agent per service in parallel at the model each task file asks for (`Model:` line, Sonnet by default). Name one or more services to run only those — that is how you re-run after one service failed, without redoing the ones that finished. Each must pass a four-point definition of done: build, tests, every acceptance criterion walked end-to-end, and existing data verified on an *upgraded* environment. A developer that hits a false premise stops and reports the delta instead of re-planning. |
+| 4 | **`/sunstice-code-review`** | Runs the **code-reviewer** agent per service against `origin/develop`, writes a report under `reviews/`, and can apply the findings you accept via the developer agent. A Critical fix is re-reviewed automatically; `Recommended` and `Minor` are not. **Also usable on its own** — see below. |
+| 5 | **`/sunstice-pr-description`** | Writes one PR description per touched service, from the branch diff and the decision record. Four fixed sections, hard 2500-character limit each, saved under the feature folder for you to paste into Azure DevOps. |
+| 6 | *(open the PR by hand)* | |
+| 7 | **`/sunstice-pr-resolve-comments`** | Fetches unresolved PR comments (read-only — it never writes to the PR) and fixes each locally, drafting the replies for you to post. Sonar (`FMBUILD`) comments are fixed without asking; human comments are each analysed against the code, then presented together so you decide them in one round. |
 
 Committing, opening PRs, and releasing are deliberately manual — there are no skills for them.
 
@@ -46,7 +47,7 @@ Follow the [VS Code MCP server flow](https://code.visualstudio.com/docs/copilot/
 
 1. **Set up the Azure DevOps MCP server** (above).
 2. **Add your services** — clone or symlink each service you own under `services/`, give it a `services/{service}/AGENTS.md`, and add a one-line bullet to root `AGENTS.md` describing what it owns. Agents rely on that bullet to route work to the right service.
-3. **Run the workflow** — `/sunstice-gather-workitem` → `/sunstice-design` → confirm → `/sunstice-implement` → `/sunstice-code-review` → PR → `/sunstice-pr-resolve-comments`.
+3. **Run the workflow** — `/sunstice-gather-workitem` → `/sunstice-design` → confirm → `/sunstice-implement` → `/sunstice-code-review` → `/sunstice-pr-description` → PR → `/sunstice-pr-resolve-comments`.
 
 ---
 

@@ -93,7 +93,7 @@ Required sections, in order:
 | **Goal** | 5 lines max: what changes for the user, and why now. |
 | **Business rules** | The validated `BR-n` list from step 4, final corrected form. The contract the design answers to. |
 | **Open questions** | Anything from step 4 the user left unresolved. Empty section if none — never omit the heading. |
-| **Invariant** | **One line**: the single property the whole design rests on, the thing that must stay true no matter the order of operations. A design that cannot name one is usually just a list of cases, and step 7 attacks this line first. |
+| **Invariant** | **One line**: the single property the whole design rests on, the thing that must stay true no matter the order of operations. A design that cannot name one is usually just a list of cases, and step 6 attacks this line first. |
 | **Decisions** | Table: `Decision \| Why \| Alternative rejected`. The most important part of the document. One row per choice a reasonable engineer could have made differently. |
 | **Flow** | One Mermaid sequence diagram of the cross-service interaction. One — not per-service diagrams. |
 | **Cross-service contracts** | **Mandatory when more than one service is in scope.** See below. |
@@ -169,31 +169,36 @@ Cover at minimum: empty, loading, error, each distinct disabled reason, freshly-
 
 **Optional, for genuinely new layouts**: build a self-contained HTML mockup with the real Bloom design tokens and publish it as an Artifact before the `ui-bloom` task file is written. Skip it for changes to existing screens — the state table is the higher-value artifact.
 
-## 6. Present and wait for confirmation
+## 6. Attack the design before showing it
 
-Present the feature file and ask for explicit confirmation. If the user does not confirm, stop and wait. Do not create task files, branches, or code.
-
-## 7. After confirmation — attack the design before writing anything
-
-The design is now final and about to become code. This is the last moment a defect is free to fix, and the version the user just confirmed — including whatever they changed while reviewing it — is the version that must be checked. Those conversational edits are the least-examined part of the whole design.
+The feature file is written and about to go to the user. Attack it now, so the user reads the design and its known weaknesses in the same pass and approves once.
 
 Invoke the **design-adversary** agent, one per feature:
 
 ```
-Attack the confirmed design at "features/feature-{ID}-{short-title}/feature-{ID}-{short-title}.md".
+Attack the design at "features/feature-{ID}-{short-title}/feature-{ID}-{short-title}.md".
 Services in scope: {service-a}, {service-b}.
 ```
 
 Do not summarize the design for it and do not defend the design to it. It reads the artifact and the code itself — that independence is the point, since you wrote the design.
 
-When it returns:
+When it returns, decide before presenting anything:
 
-- Present its findings to the user, grouped by severity, a few lines each. Do **not** silently fix them.
 - For each `Critical` and `Gap`, say whether you agree and why. You may disagree — the adversary works from the artifact and can miss intent — but say so rather than quietly dropping the finding.
-- If anything changes the design, update the feature file (Decisions table, not an appendix) and re-confirm with the user before continuing.
+- Where you agree, **fix the feature file now**, in the Decisions table, not an appendix. A defect you already accept should not be something the user has to approve twice.
+- Where you disagree, keep the finding and carry it into step 7 as an open point for the user.
 - If nothing survives, say so in one line. Do not pad.
 
-Then write the task files.
+## 7. Present and wait for confirmation
+
+Present, in this order:
+
+1. The feature file.
+2. What the adversary found, grouped by severity, a few lines each: what you fixed in response, and what you kept and disagreed with.
+
+Ask for explicit confirmation. If the user does not confirm, stop and wait. Do not create task files, branches, or code.
+
+**If the user changes the design substantially while reviewing it** — a new or reversed decision, a changed contract, a new business rule — those edits are the least-examined part of the whole design: made quickly, mid-discussion, with no exploration behind them. Run the adversary once more on the edited file before continuing, and present what it found. A wording change or a corrected typo needs no second pass; say which you judged it to be.
 
 ## 8. Write the per-service task files
 

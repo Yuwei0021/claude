@@ -49,29 +49,36 @@ Each is a rule violation at a fixed location — fix the cause, change nothing e
 
 Report what was fixed as one block, not thread by thread — this half needs no decisions from the user.
 
-### 5. Human threads — one at a time, user decides
+### 5. Human threads — every thread analysed, then one decision round
 
-**Analyse before you ask.** For each thread, open the file at the given line and read the code around it. A recommendation not grounded in the code is a guess, and the reviewer who wrote the comment can already read the diff — what you add is whether they are right.
+**Analyse every thread before you ask anything.** For each one, open the file at the given line and read the code around it. A recommendation not grounded in the code is a guess, and the reviewer who wrote the comment can already read the diff — what you add is whether they are right.
 
-Then ask the user about **one thread**, wait for the answer, act on it, and only then move to the next. Never present all threads at once and never batch the decisions: the point is that each one gets a real answer.
+The analysis is per thread and never batched: each comment gets its own read of the code. The *decisions* are collected in one round, because asking the user eight times in sequence costs eight waits and adds nothing to the eight answers.
 
-For each thread, give the user this, short:
+Present all human threads together, numbered, each in this shape and short:
 
 1. **Who and where** — author, `file:line`, and the comment in one sentence of your own words.
 2. **Is it right?** Your reading of the code, with the `file:line` you checked. Say plainly when the reviewer is correct, when they are correct but the case cannot be reached today, and when they are wrong.
 3. **What the fix would be** — the change in one or two sentences, and whether it changes behaviour a caller can observe.
 4. **Your recommendation**, and why.
 
-Then use AskUserQuestion with these options:
+Then collect the decisions:
+
+- **Four threads or fewer** — one AskUserQuestion, one question per thread.
+- **More than four** — ask for a single reply naming a decision per thread, and show the shape you expect: `1 apply, 2 reply, 3 decline, 4 skip, 5 apply`.
+
+The four decisions, whichever way you ask:
 
 - **Apply the fix** — invoke the **developer** agent scoped to the owning service.
 - **Reply, no code change** — you draft the answer, the user posts it.
 - **Decline** — draft the reasoning and the status you would suggest (`WontFix` / `ByDesign`).
 - **Skip for now** — leave it open, record it as unresolved.
 
-The user's answer decides. If you disagree with the choice, say so in one line and then do what they asked.
+The user's answer decides. If you disagree with a choice, say so in one line and then do what they asked.
 
-If the comment is unclear even after reading the code, say so and ask the user what the reviewer meant — do not guess an interpretation and act on it.
+Group the *apply* decisions by owning service and invoke the developer agent once per service with all of that service's fixes, the same way step 4 does. Visiting one service three times costs three build and test runs for one review.
+
+**Two threads never go into the batch — ask them on their own, before the others.** A thread whose comment is still unclear after you read the code (say so and ask what the reviewer meant; never guess an interpretation and act on it), and a thread whose fix is a design choice rather than a defect. Those need a conversation, not a slot in a list.
 
 The developer agent only changes code inside its own service. Nothing is ever sent back to Azure DevOps.
 

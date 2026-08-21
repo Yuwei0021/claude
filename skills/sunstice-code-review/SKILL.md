@@ -9,11 +9,11 @@ You orchestrate; the **code-reviewer** subagents review. Your job: resolve the r
 
 **This skill stands alone** — no design, task file, or work item needed. Establish which entry point you are in before step 1: it decides the follow-up in step 6.
 
-| Situation | How to run it |
-| --- | --- |
-| Reviewing **your own** work before opening a PR | `/sunstice-code-review <service>` — the usual case |
-| Reviewing **someone else's** branch or PR | Fetch and check out their branch in `services/<service>` **first**. The reviewer diffs `<comparison-branch>...HEAD`, so it reviews whatever is checked out. |
-| Reviewing with **functional context** | Run `/sunstice-gather-workitem <ID>` first — even for a work item that is not yours — then this skill. |
+| Situation                                       | How to run it                                                                                                                                               |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reviewing **your own** work before opening a PR | `/sunstice-code-review <service>` — the usual case                                                                                                          |
+| Reviewing **someone else's** branch or PR       | Fetch and check out their branch in `services/<service>` **first**. The reviewer diffs `<comparison-branch>...HEAD`, so it reviews whatever is checked out. |
+| Reviewing with **functional context**           | Run `/sunstice-gather-workitem <ID>` first — even for a work item that is not yours — then this skill.                                                      |
 
 A work item is optional in every case. Without one, the reviewer says nothing about criteria and the technical review is unaffected.
 
@@ -118,4 +118,10 @@ Apply the following findings from the review report at "<report-path>": <CR-1, C
 
 Parameters only — the developer agent reads the report itself, and `developer.agent.md` under "Review-Fix Mode" governs how findings are applied. Never paste the report into the prompt.
 
-When it returns, summarize which findings were applied, which were skipped and why, and the build and test result. If the build or tests fail, report the failure — do not retry with broader changes. Suggest, without running, a re-review of the touched files when a Critical fix was applied.
+When it returns, summarize which findings were applied, which were skipped and why, and the build and test result. If the build or tests fail, report the failure — do not retry with broader changes.
+
+**If a Critical finding was applied, re-review the touched files without asking.** A Critical fix changes a failure path or a write order, which is exactly the kind of change that introduces the next one, and it was written by an agent rather than read by a person. Dispatch one **code-reviewer** on **opus**, no `Focus` line, with the review-surface facts re-resolved and the file list narrowed to the files the developer changed. Report at `<report-path>-recheck.md`.
+
+Say plainly whether the re-review is clean. If it files a new Critical, present it and stop — do not enter a third round on your own. Two agent passes over the same code with no human between them is how a review turns into a rewrite.
+
+Skip the re-review when only `Recommended` or `Minor` findings were applied: say you skipped it and why.

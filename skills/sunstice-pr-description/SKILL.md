@@ -9,7 +9,14 @@ Produces a ready-to-paste PR description for **each** service touched by a featu
 
 ## 1. Resolve scope
 
-- Take the feature/fix ID from the user input, or infer it from the current branch name in the touched services.
+Resolve the ID the same way `/sunstice-implement` does — same three steps, in this order, so the two skills never disagree about which feature you are on:
+
+- If the user provides an ID, use it.
+- Else, parse it from the current branch name in the touched services (`workitem-{id}-{slug}` or `feature-{id}-{slug}`).
+- Else, scan `features/feature-*/` and `fixes/fix-*/`; if exactly one exists, use it. If multiple, ask the user.
+
+Then:
+
 - Locate the decision record: `features/feature-{ID}-*/feature-{ID}-*.md` (or `fixes/fix-{ID}-*/`). It is the source for intent, contracts and rejected alternatives. If none exists, work from the diff alone and say so.
 - List the touched services: for each `services/*` repo whose branch matches the ID, run `git diff --stat origin/develop...HEAD` (use `origin/master` if `develop` is missing). Skip repos with no diff.
 - Note any uncommitted work with `git status --short` — a description written from the committed diff alone would describe the PR wrongly. Say so in one line and include the uncommitted change in the reading.

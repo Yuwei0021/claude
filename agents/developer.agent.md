@@ -28,9 +28,8 @@ When invoked:
 1. **Determine your service** from the invocation scope, task file path, or feature file tag — the directory under `services/`.
 2. **Read `services/{service-name}/AGENTS.md`** for tech stack, conventions, build and test commands.
 3. **Read your task file** at `features/feature-{ID}-{title}/tasks/{service-name}.md`.
-4. **Verify CONFIRMATION** — if the user has not confirmed the current plan, summarize your tasks and ask before proceeding.
-5. **Implement** each task in the coding plan.
-6. **Verify before declaring done** — not optional, see below.
+4. **Implement** each task in the coding plan.
+5. **Verify before declaring done** — not optional, see below.
 
 ## When the plan turns out to be wrong
 
