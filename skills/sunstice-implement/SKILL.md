@@ -35,7 +35,7 @@ For each task file, extract every repository path it names and check it:
 
 If any existing-path check fails, **stop before dispatching anything** and report which task file names which missing path. Ask whether to re-run `/sunstice-design` for that service or to correct the path. Do not dispatch the other services "in the meantime" — if one task file was written against stale code, the others likely were too.
 
-Also confirm the feature file carries a **Cross-service contracts** section if more than one task file exists. Without a frozen seam, parallel services will code against different assumptions about the same interface.
+Also confirm the feature file carries a **Cross-service contracts** section if more than one task file exists. Without a frozen contract, services working in parallel will code against different assumptions about the same interface.
 
 ## 4. Pick the model per service
 
@@ -47,7 +47,7 @@ Complexity: normal
 ```
 
 - Use the model the task file names.
-- `Model: opus` — dispatch on Opus. Reserved for genuinely hard work: intricate concurrency, a non-obvious algorithm, or a change whose blast radius the design could not fully bound.
+- `Model: opus` — dispatch on Opus. Reserved for genuinely hard work: intricate concurrency, a non-obvious algorithm, or a change whose full effect the design could not pin down.
 - No `Model:` line, or an unrecognized value — default to **sonnet** and say so in your summary, so a missing line is visible rather than silent.
 
 Do not override a task file's choice on your own judgment. If you think it is wrong, say so and ask.
@@ -67,4 +67,6 @@ All invocations run concurrently. Each developer agent reads its own service's `
 
 ## 6. Report
 
-When the agents return, summarize per service: what was implemented, the build and test result, the model used, and — most importantly — **any deltas a developer agent reported** because a premise in its task file turned out to be false. A reported delta means the design and the code disagreed; surface it rather than burying it in a success summary, and update the task file so the record matches what was actually built.
+Write for a reader whose first language is not English: short sentences, common words, active voice. No idioms and no metaphors — say the literal thing. Real technical terms stay (index, migration, race condition, optimistic lock, merge-base); rare general-purpose words do not. This applies to the summary and to any task file you update.
+
+When the agents return, summarize per service: what was implemented, the build and test result, the model used, and — most importantly — **any mismatch a developer agent reported** because something its task file assumed turned out to be false. A mismatch means the design and the code disagreed. Report it instead of hiding it in a success summary, and update the task file so the record matches what was really built.

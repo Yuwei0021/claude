@@ -17,6 +17,8 @@ Two documents come out of this skill, and they have **different readers**:
 
 Never write implementation spec into the feature file. It is the single biggest reason these documents become unreadable.
 
+**Language, in both documents.** Write for a reader whose first language is not English: short sentences, common words, active voice. No idioms and no metaphors — say the literal thing. Real technical terms stay (index, migration, race condition, optimistic lock, merge-base); rare general-purpose words do not. The feature file is the one the user reads to approve or reject the design, so a sentence they have to read twice is a defect in the design record.
+
 **The feature folder holds a closed set of files** — the work item context, the feature decision record, and `tasks/{service}.md`. Nothing else. Review reports go to `reviews/`; investigation scripts, data dumps, and scratch output go somewhere outside `features/`. A feature folder that accumulates working files stops being a place anyone can find the design in.
 
 ## 1. Locate the work item context file
@@ -31,13 +33,13 @@ Never write implementation spec into the feature file. It is the single biggest 
 - If `services/{service-name}` is missing but the service is listed in root `AGENTS.md`, stop and ask the user to add it under `services/` (clone or symlink it) before designing. Do not design against a service you cannot read.
 - If a required service is in neither, stop and ask the user to confirm the intended name.
 
-## 3. Explore — with token discipline
+## 3. Explore — keeping token use low
 
 This pass serves two purposes: it grounds the design, **and** it supplies the evidence for the business-rule restatement in step 4. Brief the explorers for both — for each acceptance criterion that touches their service, ask them to report **what the code does today**, what rules the code already enforces that the item never mentions, and anything the criterion names that does not exist. One pass, both answers.
 
 - Delegate code exploration to `Explore` subagents, one per service, run concurrently, with `model: haiku` — locating code is mechanical.
 - Keep only their conclusions in the main context. Do not read large service source trees directly; read directly only the handful of files the design actually modifies or extends.
-- The design reasoning itself stays in this session on the strongest model. This is the phase where model quality compounds most.
+- The design reasoning itself stays in this session on the strongest model. This is the phase where model quality matters most.
 
 ## 4. Restate the business rules — and get them validated
 
@@ -45,7 +47,7 @@ This pass serves two purposes: it grounds the design, **and** it supplies the ev
 
 So before designing anything, present **your own understanding** of the business rules and wait for the user to validate it. Never paste or lightly reword the work item — a copy proves nothing, and if you misread the item the copy hides it. Write what you believe the system must do, in your words, grounded in what step 3 found in the code.
 
-Aim for **exhaustive**. A rule you leave out is a rule nobody validates.
+Try to cover **everything**. A rule you leave out is a rule nobody validates.
 
 Number every rule `BR-1`, `BR-2`, … so the user can reply "BR-4 is wrong" instead of describing which one they mean. Group them in three, because the gaps are the point:
 
@@ -94,8 +96,8 @@ Required sections, in order:
 | **Goal**                                  | 5 lines max: what changes for the user, and why now.                                                                                                                                                                                                                        |
 | **Business rules**                        | The validated `BR-n` list from step 4, in its final corrected form. This is the contract the design answers to.                                                                                                                                                             |
 | **Open questions**                        | Anything from step 4 the user left unresolved. Empty section if none — never omit the heading.                                                                                                                                                                              |
-| **Invariant**                             | **One line**, the single property the whole design rests on — the thing that must stay true no matter the order of operations. A design that cannot name one is usually a pile of cases rather than a design, and the adversary pass in step 7 will attack this line first. |
-| **Decisions**                             | Table: `Decision \| Why \| Alternative rejected`. This is the heart of the document. One row per choice a reasonable engineer could have made differently.                                                                                                                  |
+| **Invariant**                             | **One line**, the single property the whole design rests on — the thing that must stay true no matter the order of operations. A design that cannot name one is usually just a list of cases, and the adversary pass in step 7 will attack this line first. |
+| **Decisions**                             | Table: `Decision \| Why \| Alternative rejected`. This is the most important part of the document. One row per choice a reasonable engineer could have made differently.                                                                                                                  |
 | **Flow**                                  | One Mermaid sequence diagram of the cross-service interaction. One. Not per-service diagrams.                                                                                                                                                                               |
 | **Cross-service contracts**               | **Mandatory when more than one service is in scope. See below.**                                                                                                                                                                                                            |
 | **Existing data & migration**             | **Mandatory — see below.**                                                                                                                                                                                                                                                  |
@@ -109,7 +111,7 @@ Required sections, in order:
 
 `/sunstice-implement` runs one developer agent **per service, in parallel**. If ui-bloom's task file assumes an endpoint that `micro-service-enterprise-process` is creating in the same wave, ui-bloom codes against something that does not exist yet, both agents report success, and the failure only appears when the two halves meet.
 
-Parallel implementation is sound only when the interface is frozen _before_ either side starts. So for every seam this feature creates or changes, pin it here:
+Parallel implementation is sound only when the interface is frozen _before_ either side starts. So for every boundary this feature creates or changes, pin it down here:
 
 |              | Specify                                                                    |
 | ------------ | -------------------------------------------------------------------------- |
@@ -121,7 +123,7 @@ Parallel implementation is sound only when the interface is frozen _before_ eith
 
 Both task files then reference this section rather than restating it — one definition, two readers. Mark it **frozen**: a developer agent that wants to change a shared interface must stop and report, not adapt its own side.
 
-If a seam cannot be pinned yet, that is not a detail to settle during implementation — it is an open question for step 4.
+If a boundary cannot be pinned down yet, that is not a detail to settle during implementation — it is an open question for step 4.
 
 ### Existing data & migration (mandatory)
 
@@ -140,7 +142,7 @@ Not a mapping of AC → component. A mapping passes while the feature is still b
 
 > AC3 "expansion persists during the session" → user expands node → navigates away → returns → **state must survive the Dashboard unmounting** → therefore the state lives in the Redux store, not component state.
 
-If you cannot write the sequence without hand-waving, the design is not finished.
+If you cannot write the sequence without guessing, the design is not finished.
 
 ### UI states (mandatory when `ui-bloom` is in scope)
 
@@ -158,7 +160,7 @@ Per affected screen, enumerate every state and name the owner:
 | after save               | …            | …                       | AC4 |
 | after remount / revisit  | …            | …                       | AC3 |
 
-Cover at minimum: empty, loading, error, each distinct disabled reason, freshly-created, after-save, and after-remount. A state with no owner is a bug you have not written yet.
+Cover at minimum: empty, loading, error, each distinct disabled reason, freshly-created, after-save, and after-remount. A state with no owner is a state the code will get wrong.
 
 **When the user supplies a screenshot or mockup of the desired design**, it is a design input, not decoration — read it and design to it. Screenshots range from a rough sketch to a near-final screen; say which you got, because it changes what you may infer:
 
@@ -185,7 +187,7 @@ Attack the confirmed design at "features/feature-{ID}-{short-title}/feature-{ID}
 Services in scope: {service-a}, {service-b}.
 ```
 
-Do not summarize the design for it and do not defend the design to it. It reads the artifact and the code itself — that independence is the entire value, since you wrote the design and are anchored on it.
+Do not summarize the design for it and do not defend the design to it. It reads the artifact and the code itself — that independence is the whole point, since you wrote the design and are too close to it.
 
 When it returns:
 
@@ -208,9 +210,9 @@ Model: sonnet
 Complexity: normal
 ```
 
-Set `Model:` deliberately — you have just explored this service and know where the hard part is. `sonnet` is the default and is right for most work. Choose `opus` only for genuinely hard implementation: intricate concurrency, a non-obvious algorithm, or a change whose blast radius you could not fully bound during design. One service on `opus` and the rest on `sonnet` is a normal and good outcome; putting everything on `opus` wastes the work this phase just did.
+Set `Model:` deliberately — you have just explored this service and know where the hard part is. `sonnet` is the default and is right for most work. Choose `opus` only for genuinely hard implementation: intricate concurrency, a non-obvious algorithm, or a change whose full effect you could not pin down during design. One service on `opus` and the rest on `sonnet` is a normal and good outcome; putting everything on `opus` wastes the work this phase just did.
 
-Make each file **self-contained for the developer agent**: a developer that has to re-explore the service to understand its task wastes the tokens this phase already spent. Include:
+Make each file **complete on its own for the developer agent**: a developer that has to explore the service again to understand its task wastes the tokens this phase already spent. Include:
 
 - **What is already verified** — the facts exploration established, so the developer does not re-derive them.
 - **Every existing path it names must exist right now.** `/sunstice-implement` checks this mechanically before dispatching, and a task file pointing at a class that is not there stops the whole run. Mark anything to be created as new.
@@ -219,7 +221,7 @@ Make each file **self-contained for the developer agent**: a developer that has 
 - **Test expectations** — which unit/component tests must exist and what they must prove.
 - **Definition of done**, including the service's build and test commands from its `AGENTS.md`.
 
-**Never put literal implementation code in a task file.** Name the files, classes, patterns, and expected behavior — not the bodies. Code in a spec means the design phase did the implementation at design-phase cost, and it goes stale against the repo before anyone runs it.
+**Never put literal implementation code in a task file.** Name the files, classes, patterns, and expected behavior — not the bodies. Code in a spec means the design phase did the implementation at design-phase cost, and it falls out of date with the repo before anyone runs it.
 
 ## 9. Amendments — fold them in, never append
 

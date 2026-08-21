@@ -6,124 +6,117 @@ model: opus
 
 # `/sunstice-code-review` — Service-Scoped Code Review
 
-Use this skill to orchestrate a comprehensive code review of changes in one or more services under `services/`. The **code-reviewer** subagent does the actual review; this skill only resolves scope, computes the report path, invokes the subagent, and handles the follow-up.
+You orchestrate; the **code-reviewer** subagents do the reviewing. Your job: resolve the review surface, compute the report paths, dispatch the reviewers, and handle the follow-up.
 
-**This skill stands alone.** It is not a stage of the feature pipeline and does not require a design, a task file, or a work item. Three entry points are all normal:
+**This skill stands alone.** It is not a stage of the feature pipeline and needs no design, task file, or work item. Establish which entry point you are in before step 1 — it decides the follow-up in step 6.
 
-| Situation                                       | How to run it                                                                                                                                                                              |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Reviewing **your own** work before opening a PR | `/sunstice-code-review <service>` — the usual case                                                                                                                                                  |
-| Reviewing **someone else's** branch or PR       | Fetch and check out their branch in `services/<service>` **first**, then `/sunstice-code-review <service>`. The reviewer diffs `<comparison-branch>...HEAD`, so it reviews whatever is checked out. |
-| Reviewing with **functional context**           | Run `/sunstice-gather-workitem <ID>` first — even for a work item that is not yours — then `/sunstice-code-review`. The reviewer will check the changes against the acceptance criteria.                     |
+| Situation | How to run it |
+| --- | --- |
+| Reviewing **your own** work before opening a PR | `/sunstice-code-review <service>` — the usual case |
+| Reviewing **someone else's** branch or PR | Fetch and check out their branch in `services/<service>` **first**. The reviewer diffs `<comparison-branch>...HEAD`, so it reviews whatever is checked out. |
+| Reviewing with **functional context** | Run `/sunstice-gather-workitem <ID>` first — even for a work item that is not yours — then this skill. The reviewer checks the change against the acceptance criteria. |
 
-A work item is **optional in every case**. Without one, functional alignment is simply marked Not Applicable and the technical review is unaffected.
+A work item is optional in every case. Without one, the reviewer says nothing about criteria and the technical review is unaffected.
 
-Establish which of the three you are in before step 1 — it changes the follow-up in step 6.
+## 1. Resolve the services and the review surface
 
-## 1. Resolve Local Service(s) to Review
+Map any service name that does not start with `services/` to `services/<service-name>` and verify the directory exists. If it does not, stop and ask.
 
-- Identify the target service(s) from the user input (e.g., `services/micro-service-master-data` or `micro-service-master-data`, `services/ui-bloom` or `ui-bloom`).
-- Map any service name that does not start with `services/` to `services/<service-name>`.
-- Verify the directory exists under `services/`. If it is invalid, stop and ask the user for clarification.
+Then resolve the surface **once, here** — every reviewer gets these facts in its prompt instead of re-deriving them. That is one round of git work rather than one per reviewer, and it closes a real failure mode: two reviewers resolving different bases, filing findings scoped to different changes. Inside `services/<service-name>`:
 
-Then establish the **review surface** for each service — run `git status --short` inside `services/<service-name>` and note whether there are uncommitted or untracked changes.
+```
+git fetch origin
+git merge-base <comparison-branch> HEAD
+git diff <comparison-branch>...HEAD --stat -M
+git status --short
+```
 
-This matters because the committed diff is not the whole change. Work in this workspace is committed by hand, so a service that was just implemented usually has its change sitting in the working tree, and a branch-vs-branch diff would review none of it. Untracked files never appear in any diff at all.
+Carry into every reviewer prompt: comparison branch, merge-base, the `--stat` file list, uncommitted and untracked counts, and the line `Origin refs are current; do not fetch.` Pass **facts only, never diff content** — each reviewer pulls the hunks it decides it needs.
 
-- If the working tree is dirty, say so in one line before dispatching (which service, how many uncommitted and untracked files). The review still proceeds — the reviewer covers committed, uncommitted, and untracked changes as one surface.
-- Do not commit or stash anything to tidy the surface. What is on disk is what gets reviewed.
+The working tree is part of the surface, not a distraction from it: work here is committed by hand, so a service that was just implemented usually has its change uncommitted, and untracked files appear in no diff at all. If the tree is dirty, say so in one line before dispatching. Never commit or stash to tidy it — what is on disk is what gets reviewed.
 
-## 2. Locate Work Item Context File (Optional)
+## 2. Work item context (optional)
 
-Only perform this step if the user provides or references an Azure DevOps work item:
+Only when the user names an Azure DevOps work item:
 
-- Find the work item context file at `features/feature-{ID}-{short-title}/workitem-{ID}-context.md` (or scan `features/` for a subdirectory named `feature-{ID}-*` containing a `workitem-{ID}-context.md` file).
-- If a work item ID/reference was provided but the file is not found, advise the user to run the `gather-workitem` skill first.
-- If found, extract only what the reviewer needs for functional alignment: the **Summary** section plus the **acceptance criteria**. Do not forward full comment threads or attachment contents to the subagent. Update the chat session name to match the work item/feature title.
+- Find `features/feature-{ID}-{short-title}/workitem-{ID}-context.md`, or scan `features/` for a `feature-{ID}-*` directory containing it.
+- If the ID was given but no file exists, tell the user to run `/sunstice-gather-workitem` first.
+- Extract the **Summary** and the **acceptance criteria** only — no comment threads, no attachments. Update the chat session name to the work item title.
 
-## 3. Compute the Report Path
+## 3. Compute the report paths
 
-Compute the path here so the subagent does not have to re-derive it by scanning `features/`.
+Compute them here so the subagents do not scan `features/` for them.
 
-**One report per service, always — the filename must carry the service name.** Reviews of several services run in parallel; a path that identifies only the work item makes them all write to the same file and the last writer wins.
+**The filename carries the service name and the Focus.** Reviews run in parallel; a path identifying only the work item makes them all write to one file and the last writer wins.
 
-- **With a work item**: `reviews/review-{ID}-{short-title}/review-{ID}-{service-name}.md`, where `{ID}` is the resolved work item ID and `{short-title}` is a kebab-case slug of its title (e.g. `reviews/review-56138-link-panel-process-template/review-56138-ui-bloom.md`).
-- **Without a work item**: `reviews/review-{service-name}/review-{timestamp}.md`, with `{timestamp}` from `date +%Y%m%d` (e.g. `reviews/review-micro-service-master-data/review-20260703.md`).
+- **With a work item**: `reviews/review-{ID}-{short-title}/review-{ID}-{service-name}-correctness.md` and `…-conventions.md` — `{short-title}` is a kebab-case slug of the work item title.
+- **Without one**: `reviews/review-{service-name}/review-{timestamp}-correctness.md` and `…-conventions.md`, with `{timestamp}` from `date +%Y%m%d`.
 
-Before dispatching, check that no two targeted services resolve to the same path. If they do, the formula was applied wrong — fix it rather than letting the subagents race.
+Check that no two dispatched reviewers resolve to the same path before you launch them.
 
-## 4. Invoke the Code Reviewer Subagent
+## 4. Dispatch the reviewers
 
-Invoke the **code-reviewer** subagent:
+**Split or not, decided by the file count from step 1:**
+
+- **More than 5 changed files, or more than one `packages/*` directory** — split by Focus.
+- **5 or fewer in a single package** — one reviewer on **opus**, no `Focus` line, owning everything, writing to the `-correctness.md` path. Say in one line that you did not split.
+
+The split exists so each reviewer can read a big diff closely. On a three-file change there is nothing to divide, and it pays for the same diff twice.
+
+When splitting, dispatch both reviewers per service — `Correctness` on **opus**, `Conventions` on **sonnet**. Convention and test-style work is pattern-matching against `AGENTS.md` and the surrounding code; simulating a half-applied write is not, so the opus budget goes where the reasoning is. They do not talk to each other, and that is the point: two reviewers with one job each find more than one reviewer doing both jobs.
 
 ```
 Perform a code review for service: "<service-name>" (path: "services/<service-name>").
-Save the report at: "<computed-report-path>".
+Focus: Correctness | Conventions
+Save the report at: "<report-path>-<focus>.md".
+<review surface facts from step 1>
 ```
 
-If work item details are available, append:
+With a work item, append its Summary and acceptance criteria under a `Context:` heading.
 
-```
-Verify functional alignment with the provided work item details.
+**The prompt is an allowlist.** Service name and path, report path, review-surface facts, and — when one exists — the work item Summary and acceptance criteria. Nothing else, even when this session designed and implemented the change and you know why every line is there. Never pass the feature decision record, task files, `fixes/*` diagnoses, your own implementation notes, or any "we decided X because Y". Handing over the rationale turns the review into a consistency check against the design instead of a check against the code.
 
-Context:
-<work item Summary and acceptance criteria — not the full context file>
-```
+**Launch every reviewer in one message** so they run in parallel — services are independent repositories, and the two Focus reviewers of one service write to different paths, so nothing conflicts.
 
-**The invocation prompt is an allowlist.** Pass only: the service name, the service path, the report path, and — when a work item exists — its Summary plus acceptance criteria. Nothing else, even when this session designed and implemented the change and you know exactly why every line is there. Explicitly do not pass: the feature decision record, task-file content, `fixes/*` diagnoses, your own implementation notes, or any "we decided X because Y". The reviewer must reach its own conclusions from the diff and the service on disk; handing it the rationale turns the review into a consistency check against the design instead of a check against the code.
+## 5. Present the result
 
-**If multiple services are targeted, launch one code-reviewer subagent per service in parallel** (a single message with multiple Agent tool calls) — each service is an independent git repository, so the reviews cannot conflict.
-
-Wait for the subagent(s) to complete and return their compact summaries.
-
-## 5. Present the Report
-
-- Provide a clickable link to the generated report file.
-- Give a brief, high-level summary of the critical findings and functional alignment in chat. Keep it short and direct the user to the report for details — do not re-read the full report.
-- State the review surface the reviewer actually used (comparison branch, and whether uncommitted/untracked changes were included). If it does not match what you established in step 1, that is the first thing to report, not a footnote — every finding below it is scoped to the wrong change.
+- **The review surface first** — comparison branch, and whether uncommitted and untracked changes were covered. If it does not match what you resolved in step 1, that is the headline, not a footnote: every finding under it is scoped to the wrong change.
+- Finding counts by severity, and a clickable link to each report file, with one short line per Critical finding. Do not re-read the reports in full.
+- Report a clean review as a clean result: say what was checked and stop. A short report backed by named checks is the good outcome, not a failed one.
 
 ## 6. Follow-up — depends on whose code it is
 
-### Reviewing someone else's branch
+### Someone else's branch
 
-**Do not offer to apply anything.** Fixing a colleague's branch locally is not a review outcome — it creates changes they did not ask for, on work they own, that will collide with their next commit.
+**Offer nothing.** Fixing a colleague's branch creates changes they did not ask for, on work they own, that collide with their next commit.
 
-Instead, reshape the findings for them to act on. For each finding, give a comment ready to paste onto the PR: the `file:line` it anchors to, one sentence on the problem, and the concrete suggestion. Group them by severity and keep each one short enough to read in a review thread — a reviewer's comment that runs three paragraphs does not get acted on.
+Reshape the findings instead: per finding, a comment ready to paste onto the PR — the `file:line`, one sentence on the problem, the concrete suggestion. Grouped by severity, each short enough to read in a review thread. Write for a reader whose first language is not English: short sentences, common words, active voice. No idioms and no metaphors — say the literal thing. Real technical terms stay (index, migration, race condition, optimistic lock, merge-base); rare general-purpose words do not. Then stop; posting is the user's call.
 
-Then stop. The report under `reviews/` is your record; posting is the user's call.
+### Your own work — apply findings (optional)
 
-### Reviewing your own work — apply recommendations (optional)
+Selection spans both reports of a service. IDs are unique per report, so name the report alongside the ID whenever both are in play.
 
-If the review produced findings, ask the user (via AskUserQuestion) whether to apply them:
+Ask via AskUserQuestion:
 
 - **Critical only** (recommended)
 - **Critical + Recommended**
-- **Let me pick** — user supplies specific finding IDs
+- **Let me pick** — user supplies finding IDs
 - **No, review only**
 
-If the user opts in:
+If the user opts in, **classify every selected finding first.** A finding is **behaviour-changing** when its fix alters what a caller can observe: response shape, HTTP status, whether an error propagates or is swallowed, a persisted value, a published contract. Everything else is internal.
 
-**Before dispatching, classify every selected finding.** A finding is
-**behaviour-changing** when its fix alters what a caller can observe: the shape of a
-response, an HTTP status, whether an error propagates or is swallowed, a persisted
-value, or a published contract. Everything else is internal.
+- **Internal** — apply without asking.
+- **Behaviour-changing** — state the current and resulting behaviour, one line each, and get confirmation first. Do this even when the finding proposes the fix: a finding names a problem, it does not authorise a contract change. When it offers options, ask which; do not choose for the user.
 
-- **Internal findings** — apply them without asking.
-- **Behaviour-changing findings** — state the current behaviour and the behaviour after
-  the fix, in one line each, and get the user's confirmation first. Do this even when
-  the finding text itself proposes the fix: a review finding names a problem, it does
-  not authorise a contract change. If a finding offers more than one option, ask which
-  one; do not pick for the user.
+A review that quietly changes an API is worse than the defect it fixed, because the defect was at least visible in the report.
 
-A review that quietly changes an API is worse than the defect it fixed, because the
-defect was at least visible in the report.
+Then invoke the **developer** subagent in review-fix mode, one per service, in parallel:
 
-1. Invoke the **developer** subagent in **review-fix mode**, one subagent per service (in parallel if several services are involved):
-   ```
-   Review-fix mode for service: "<service-name>" (path: "services/<service-name>").
-   Apply the following findings from the review report at "<report-path>": <CR-1, CR-3, ...>.
-   ```
-   The prompt carries the parameters and nothing else. How the findings are applied — only the selected ones, following each Before/After snippet, build and tests afterwards, a `## Fix Log` appended to the report — is in `developer.agent.md` under "Review-Fix Mode", and that copy is in force. Restating it here only creates a second version to keep in step.
-2. Do NOT paste the full report into the prompt — the developer subagent reads the report file itself; only the path and the selected finding IDs go in the prompt.
-3. When the subagent(s) return, summarize in chat: which findings were applied, which were skipped and why, and the build/test result. If the build or tests fail after fixes, report the failure — do not silently retry with broader changes.
-4. Suggest (but do not run automatically) a re-review of only the touched files if any Critical finding was applied.
+```
+Review-fix mode for service: "<service-name>" (path: "services/<service-name>").
+Apply the following findings from the review report at "<report-path>": <CR-1, CR-3, ...>.
+```
+
+Parameters only — the developer agent reads the report itself, and `developer.agent.md` under "Review-Fix Mode" governs how findings are applied. Never paste the report into the prompt.
+
+When it returns, summarize which findings were applied, which were skipped and why, and the build and test result. If the build or tests fail, report the failure — do not retry with broader changes. Suggest, without running, a re-review of the touched files when a Critical fix was applied.
